@@ -17,7 +17,7 @@ import HeaderLink from './HeaderLink.astro';
 			</div>
 			<HeaderLink href="/friends">友链</HeaderLink>
 			<HeaderLink href="/about">关于</HeaderLink>
-			<HeaderLink href="/search" aria-label="搜索">🔍</HeaderLink>
+			<button type="button" class="search-trigger" data-search-trigger aria-label="打开搜索">🔍</button>
 		</div>
 		<div class="social-links">
 			<a href="https://github.com/WizardHeHeJun" target="_blank">
@@ -140,5 +140,20 @@ import HeaderLink from './HeaderLink.astro';
 		opacity: 1;
 		pointer-events: auto;
 		transform: translateX(-50%) translateY(0);
+	}
+	/* —— 搜索触发按钮 —— */
+	.search-trigger {
+		padding: 1em 0.5em;
+		background: transparent;
+		border: none;
+		border-bottom: 4px solid transparent;
+		font-family: inherit;
+		font-size: 1em;
+		cursor: pointer;
+		color: var(--black);
+		transition: background 0.15s ease;
+	}
+	.search-trigger:hover {
+		background: rgba(35, 55, 255, 0.06);
 	}
 </style>

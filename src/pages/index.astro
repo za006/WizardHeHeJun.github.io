@@ -13,15 +13,23 @@ const posts = (await getCollection('blog')).sort(
 );
 const recent = posts.slice(0, 3);
 
-// Hero 的打字机短句池——爱莉希雅口吻，刷新会随机一句
+// Hero 的打字机短句池——爱莉希雅口吻，刷新会随机一句（短句优先）
 const typeLines = [
-	'如你所见——你找上了我呢～',
-	'悄悄告诉你哦，今天的我也很可爱♪',
-	'欢迎来到我的小宇宙，要喝杯茶吗～',
-	'飞花总会找到它的人，你也是呢',
-	'咦？今天的访客也很有眼光呢～♪',
-	'能在这里相遇，可不是每天都有的事哦',
-	'美丽的女孩子什么都能做到——比如让你停下来看一眼',
+	'嘿，你来啦～',
+	'哇～有人来玩呢',
+	'欢迎欢迎♪',
+	'咦？是新朋友呀',
+	'嗯哼～你好',
+	'哎呀被你发现啦',
+	'飞花引你来的吗',
+	'今天的我也很可爱哦♪',
+	'请随便逛吧～',
+	'要喝杯茶吗',
+	'我等你好久了哦',
+	'缘分真奇妙呢',
+	'让我看看你～',
+	'悄悄告诉你哦',
+	'如你所见——是我',
 ];
 ---
 
@@ -42,11 +50,12 @@ const typeLines = [
 				<Image src={elysia} width={140} height={140} alt="头像" class="avatar" />
 
 				<h1 class="name">WizardHeHeJun</h1>
-				<p class="romaji">魔法师·何鹤君</p>
+				<p class="romaji">WizardryLaw_呵呵君HJ</p>
 
 				<div class="pills">
 					<span class="pill">🤖 AI 工程师</span>
 					<span class="pill">🧪 测试自动化</span>
+					<span class="pill">🎮 游戏开发</span>
 					<span class="pill">✨ ACG 爱好者</span>
 				</div>
 
@@ -105,10 +114,10 @@ const typeLines = [
 				</header>
 				<div class="now-grid">
 					<div class="now-item">
-						<div class="now-icon">📍</div>
+						<div class="now-icon">💼</div>
 						<div>
-							<div class="now-title">中国</div>
-							<div class="now-sub">在家写代码 + 折腾这个博客</div>
+							<div class="now-title">某游戏厂</div>
+							<div class="now-sub">担任测试工程师</div>
 						</div>
 					</div>
 					<div class="now-item">
@@ -146,7 +155,7 @@ const typeLines = [
 				if (i <= line.length) {
 					target.textContent = line.slice(0, i);
 					i++;
-					setTimeout(step, 120 + Math.random() * 60);
+					setTimeout(step, 55 + Math.random() * 35);
 				}
 			}
 			step();

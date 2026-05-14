@@ -1,0 +1,282 @@
+---
+// 全局搜索浮窗。Header 里 [data-search-trigger] 按钮点击触发。
+// 按 / 也能打开；ESC 或点 backdrop 关闭。
+// 用 Pagefind JS API 走自定义 UI——结果异步渲染。
+---
+
+<div id="search-overlay" class="search-overlay" hidden role="dialog" aria-modal="true">
+	<div class="backdrop" data-close></div>
+	<div class="search-popover">
+		<button class="close-btn" data-close type="button" aria-label="关闭">×</button>
+		<div class="search-bar">
+			<input
+				type="search"
+				id="overlay-q"
+				placeholder="搜索文章..."
+				autocomplete="off"
+				autocorrect="off"
+				spellcheck="false"
+			/>
+			<button id="overlay-go" class="search-btn" type="button">搜索</button>
+		</div>
+		<p class="hint" id="overlay-hint">输入关键词开始搜索</p>
+		<div id="overlay-results" class="results"></div>
+	</div>
+</div>
+
+<script is:inline>
+	(function () {
+		const overlay = document.getElementById('search-overlay');
+		const input = document.getElementById('overlay-q');
+		const button = document.getElementById('overlay-go');
+		const hint = document.getElementById('overlay-hint');
+		const results = document.getElementById('overlay-results');
+		let pagefind = null;
+		let debounceTimer = null;
+
+		function open() {
+			overlay.hidden = false;
+			document.body.style.overflow = 'hidden';
+			setTimeout(() => input.focus(), 30);
+		}
+		function close() {
+			overlay.hidden = true;
+			document.body.style.overflow = '';
+			input.value = '';
+			results.innerHTML = '';
+			hint.textContent = '输入关键词开始搜索';
+		}
+
+		// 触发器（Header 里的搜索按钮 + 任何带 data-search-trigger 的元素）
+		document.addEventListener('click', (e) => {
+			const trigger = e.target.closest('[data-search-trigger]');
+			if (trigger) {
+				e.preventDefault();
+				open();
+				return;
+			}
+			if (e.target.closest('[data-close]')) close();
+		});
+
+		// 键盘快捷键
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && !overlay.hidden) {
+				close();
+				return;
+			}
+			if (e.key === '/' && overlay.hidden) {
+				const tag = e.target.tagName;
+				if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+					e.preventDefault();
+					open();
+				}
+			}
+		});
+
+		// 搜索逻辑
+		async function ensureLoaded() {
+			if (pagefind) return pagefind;
+			pagefind = await import('/pagefind/pagefind.js');
+			await pagefind.options({ excerptLength: 30 });
+			await pagefind.init();
+			return pagefind;
+		}
+		async function doSearch(q) {
+			if (!q || !q.trim()) {
+				results.innerHTML = '';
+				hint.textContent = '输入关键词开始搜索';
+				return;
+			}
+			hint.textContent = `正在搜索「${q}」...`;
+			try {
+				const pf = await ensureLoaded();
+				const search = await pf.search(q);
+				const items = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+				if (items.length === 0) {
+					hint.textContent = `没有找到关于「${q}」的内容`;
+					results.innerHTML = '';
+					return;
+				}
+				hint.textContent = `找到 ${items.length} 条结果`;
+				results.innerHTML = items
+					.map(
+						(it) => `
+						<a class="result" href="${it.url}">
+							<h3>${it.meta.title || it.url}</h3>
+							<p class="excerpt">${it.excerpt}</p>
+						</a>
+					`,
+					)
+					.join('');
+			} catch (err) {
+				hint.textContent = '搜索失败，刷新一下试试？';
+				console.error(err);
+			}
+		}
+		input.addEventListener('input', () => {
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => doSearch(input.value), 200);
+		});
+		button.addEventListener('click', () => doSearch(input.value));
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') doSearch(input.value);
+		});
+	})();
+</script>
+
+<style is:global>
+	.search-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 1000;
+		display: block;
+	}
+	.search-overlay[hidden] {
+		display: none;
+	}
+	.search-overlay .backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(15, 18, 25, 0.25);
+		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
+		animation: search-fade 180ms ease-out;
+	}
+	.search-popover {
+		position: absolute;
+		top: 64px;
+		right: 24px;
+		width: 460px;
+		max-width: calc(100vw - 32px);
+		max-height: calc(100vh - 96px);
+		overflow-y: auto;
+		padding: 1.2em 1.3em;
+		background: rgba(255, 255, 255, 0.92);
+		backdrop-filter: blur(20px) saturate(180%);
+		-webkit-backdrop-filter: blur(20px) saturate(180%);
+		border: 1px solid rgba(255, 255, 255, 0.7);
+		border-radius: 16px;
+		box-shadow: 0 16px 48px rgba(31, 38, 135, 0.25);
+		animation: search-pop 200ms cubic-bezier(0.2, 0.8, 0.4, 1.2);
+	}
+	@keyframes search-fade {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+	@keyframes search-pop {
+		from {
+			opacity: 0;
+			transform: translateY(-8px) scale(0.96);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+	.search-popover .close-btn {
+		position: absolute;
+		top: 6px;
+		right: 10px;
+		width: 28px;
+		height: 28px;
+		font-size: 1.5em;
+		line-height: 1;
+		background: transparent;
+		border: none;
+		color: rgb(var(--gray));
+		cursor: pointer;
+		border-radius: 50%;
+		transition: background 0.15s ease;
+	}
+	.search-popover .close-btn:hover {
+		background: rgba(0, 0, 0, 0.05);
+		color: rgb(var(--gray-dark));
+	}
+	.search-popover .search-bar {
+		display: flex;
+		gap: 0.5em;
+		margin: 0.4em 0 0.6em;
+	}
+	.search-popover input {
+		flex: 1;
+		padding: 0.55em 0.9em;
+		font-family: inherit;
+		font-size: 0.95em;
+		background: rgba(255, 255, 255, 0.7);
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		border-radius: 999px;
+		outline: none;
+		color: rgb(var(--gray-dark));
+		transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	}
+	.search-popover input:focus {
+		border-color: #ff90c0;
+		box-shadow: 0 0 0 3px rgba(255, 144, 192, 0.2);
+	}
+	.search-popover .search-btn {
+		padding: 0.55em 1.2em;
+		font-family: inherit;
+		font-size: 0.9em;
+		font-weight: 600;
+		color: white;
+		background: linear-gradient(135deg, #ff90c0, #ff70a8);
+		border: none;
+		border-radius: 999px;
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+		white-space: nowrap;
+	}
+	.search-popover .search-btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 6px 16px rgba(255, 112, 168, 0.3);
+	}
+	.search-popover .hint {
+		margin: 0 0 0.8em;
+		font-size: 0.82em;
+		color: rgb(var(--gray));
+	}
+	.search-popover .results {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5em;
+	}
+	.search-popover .result {
+		display: block;
+		padding: 0.7em 0.9em;
+		background: rgba(255, 255, 255, 0.5);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		border-radius: 10px;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+		transition: background 0.15s ease;
+	}
+	.search-popover .result:hover {
+		background: rgba(255, 255, 255, 0.85);
+	}
+	.search-popover .result h3 {
+		margin: 0 0 0.2em;
+		font-size: 0.95em;
+		color: var(--accent);
+	}
+	.search-popover .result .excerpt {
+		margin: 0;
+		font-size: 0.82em;
+		color: rgb(var(--gray-dark));
+		line-height: 1.45;
+		opacity: 0.85;
+	}
+	.search-popover .result mark {
+		background: rgba(255, 200, 100, 0.4);
+		color: inherit;
+		padding: 0 0.15em;
+		border-radius: 2px;
+	}
+	@media (max-width: 600px) {
+		.search-popover {
+			top: 64px;
+			right: 12px;
+			left: 12px;
+			width: auto;
+		}
+	}
+</style>
