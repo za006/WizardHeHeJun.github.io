@@ -1,0 +1,25 @@
+---
+// 独立的 fixed 定位背景层。
+// 为什么不放在 body：当 body 用 background-attachment: fixed + 子元素有 backdrop-filter 时，
+// 浏览器会把 fixed bg 当快照「冻结」，导致 JS 更新 background-position 不生效。
+// 拆到独立 div + z-index: -10 + position: fixed 可以彻底绕开这个问题。
+import bgImage from '../assets/bg.jpg';
+---
+
+<div
+	class="bg-layer"
+	aria-hidden="true"
+	style={`background-image: url(${bgImage.src})`}
+></div>
+
+<style is:global>
+	.bg-layer {
+		position: fixed;
+		inset: 0;
+		background-position: center var(--bg-y, 0%);
+		background-repeat: no-repeat;
+		background-size: cover;
+		z-index: -10;
+		pointer-events: none;
+	}
+</style>
