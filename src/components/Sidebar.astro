@@ -163,11 +163,10 @@ const tagCount = new Set(posts.flatMap((p) => p.data.tags)).size;
 			gap: 0.8em;
 		}
 	}
-	/* —— 移动 (≤640)：恢复单列垂直堆叠 —— */
+	/* —— 移动 (≤640)：隐藏 sidebar，让博客列表直接铺到顶 —— */
 	@media (max-width: 640px) {
 		.sidebar {
-			display: flex;
-			flex-direction: column;
+			display: none;
 		}
 	}
 </style>
