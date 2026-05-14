@@ -5,6 +5,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import { calcReadingStats } from '../../utils/reading-time';
 
@@ -27,7 +28,32 @@ const postsWithStats = posts.map((p) => ({
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
 			main {
-				width: 960px;
+				width: 1100px;
+				background: transparent;
+				backdrop-filter: none;
+				-webkit-backdrop-filter: none;
+				border: none;
+				border-radius: 0;
+				box-shadow: none;
+				padding: 1.5em 1em;
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) 280px;
+				gap: 1.5em;
+				align-items: start;
+			}
+			.posts-card {
+				padding: 1.8em 1.6em;
+				background: rgba(255, 255, 255, 0.55);
+				backdrop-filter: blur(18px) saturate(180%);
+				-webkit-backdrop-filter: blur(18px) saturate(180%);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 18px;
+				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+			}
+			@media (max-width: 960px) {
+				main {
+					grid-template-columns: 1fr;
+				}
 			}
 			ul {
 				display: flex;
@@ -133,7 +159,7 @@ const postsWithStats = posts.map((p) => ({
 	<body>
 		<Header />
 		<main>
-			<section>
+			<section class="posts-card">
 				<ul>
 					{
 						postsWithStats.map(({ post, stats }) => (
@@ -160,6 +186,7 @@ const postsWithStats = posts.map((p) => ({
 					}
 				</ul>
 			</section>
+			<Sidebar />
 		</main>
 		<Footer />
 	</body>

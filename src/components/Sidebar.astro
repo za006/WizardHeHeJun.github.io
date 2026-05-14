@@ -1,0 +1,158 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import elysiaAvatar from '../assets/elysia.png';
+
+const posts = await getCollection('blog');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const recent = sortedPosts.slice(0, 5);
+
+const categoryCount = new Set(posts.map((p) => p.data.category)).size;
+const tagCount = new Set(posts.flatMap((p) => p.data.tags)).size;
+---
+
+<aside class="sidebar">
+	<!-- Profile -->
+	<div class="card">
+		<Image src={elysiaAvatar} width={120} height={120} alt="头像" class="avatar" />
+		<h3 class="name">WizardHeHeJun</h3>
+		<p class="bio">AI / 测试自动化 / 摸鱼写代码 / 偶尔写点关于 AI 的思考</p>
+		<div class="socials">
+			<a href="https://github.com/WizardHeHeJun" target="_blank" rel="noopener">GitHub</a>
+			<a href="https://space.bilibili.com/40752109" target="_blank" rel="noopener">哔哩哔哩</a>
+			<a href="https://x.com/wizardhehejun" target="_blank" rel="noopener">X</a>
+		</div>
+	</div>
+
+	<!-- Stats -->
+	<div class="card">
+		<div class="stats">
+			<div class="stat">
+				<div class="num">{posts.length}</div>
+				<div class="label">文章</div>
+			</div>
+			<div class="stat">
+				<div class="num">{categoryCount}</div>
+				<div class="label">分类</div>
+			</div>
+			<div class="stat">
+				<div class="num">{tagCount}</div>
+				<div class="label">标签</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Recent Posts -->
+	<div class="card">
+		<h4 class="card-title">最近文章</h4>
+		<ul class="recent-list">
+			{
+				recent.map((p) => (
+					<li>
+						<a href={`/blog/${p.id}/`}>{p.data.title}</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</aside>
+
+<style>
+	.sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+	}
+	.card {
+		padding: 1.2em;
+		background: rgba(255, 255, 255, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.45);
+		border-radius: 14px;
+		backdrop-filter: blur(12px) saturate(160%);
+		-webkit-backdrop-filter: blur(12px) saturate(160%);
+		box-shadow: 0 4px 16px rgba(31, 38, 135, 0.08);
+	}
+	.avatar {
+		display: block;
+		margin: 0 auto 0.6em;
+		border-radius: 50%;
+		width: 100px;
+		height: 100px;
+		object-fit: cover;
+	}
+	.name {
+		text-align: center;
+		margin: 0 0 0.4em;
+		font-size: 1.15em;
+	}
+	.bio {
+		text-align: center;
+		margin: 0 0 0.8em;
+		font-size: 0.85em;
+		color: rgb(var(--gray));
+		line-height: 1.5;
+	}
+	.socials {
+		display: flex;
+		justify-content: center;
+		gap: 0.6em;
+		flex-wrap: wrap;
+	}
+	.socials a {
+		font-size: 0.85em;
+		padding: 0.2em 0.7em;
+		background: rgba(35, 55, 255, 0.08);
+		border-radius: 999px;
+		color: var(--accent);
+		text-decoration: none;
+		transition: background 0.15s ease;
+	}
+	.socials a:hover {
+		background: rgba(35, 55, 255, 0.18);
+	}
+	.stats {
+		display: flex;
+		justify-content: space-around;
+		gap: 0.6em;
+	}
+	.stat {
+		text-align: center;
+	}
+	.num {
+		font-size: 1.6em;
+		font-weight: 600;
+		color: var(--accent);
+		line-height: 1;
+	}
+	.label {
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+		margin-top: 0.3em;
+	}
+	.card-title {
+		margin: 0 0 0.8em;
+		font-size: 1em;
+		color: rgb(var(--gray-dark));
+	}
+	.recent-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5em;
+	}
+	.recent-list a {
+		font-size: 0.9em;
+		color: rgb(var(--gray-dark));
+		text-decoration: none;
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		transition: color 0.15s ease;
+	}
+	.recent-list a:hover {
+		color: var(--accent);
+	}
+</style>
