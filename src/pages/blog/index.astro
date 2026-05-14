@@ -7,9 +7,11 @@ import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = (await getCollection('blog')).sort((a, b) => {
+	// Featured posts first, then by pubDate desc
+	if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+	return b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+});
 ---
 
 <!doctype html>
@@ -62,6 +64,18 @@ const posts = (await getCollection('blog')).sort(
 				margin: 0;
 				color: rgb(var(--gray));
 			}
+			.pin-badge {
+				display: inline-block;
+				font-size: 0.55em;
+				padding: 0.2em 0.6em;
+				margin-right: 0.5em;
+				background: rgba(255, 200, 100, 0.3);
+				border: 1px solid rgba(255, 180, 80, 0.6);
+				border-radius: 999px;
+				color: #b8860b;
+				vertical-align: middle;
+				font-weight: 600;
+			}
 			ul li a:hover h4,
 			ul li a:hover .date {
 				color: rgb(var(--accent));
@@ -98,7 +112,10 @@ const posts = (await getCollection('blog')).sort(
 									{post.data.heroImage && (
 										<Image width={720} height={360} src={post.data.heroImage} alt="" />
 									)}
-									<h4 class="title">{post.data.title}</h4>
+									<h4 class="title">
+										{post.data.featured && <span class="pin-badge">📌 置顶</span>}
+										{post.data.title}
+									</h4>
 									<p class="date">
 										<FormattedDate date={post.data.pubDate} />
 									</p>
