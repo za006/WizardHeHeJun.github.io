@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import elysia from '../assets/elysia.png';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`404 · ${SITE_TITLE}`} description="迷路了？这里没有这一页呢～♪" />
+	</head>
+	<body>
+		<Header />
+		<main class="not-found">
+			<Image src={elysia} width={180} height={180} alt="迷路了" class="elysia" />
+			<h1>404</h1>
+			<p class="big">迷路了？这里没有这一页呢～♪</p>
+			<p class="small">可能是链接拼错了，或者它已经搬家去别处啦。</p>
+			<div class="actions">
+				<a href="/" class="btn primary">回首页</a>
+				<a href="/blog/" class="btn">去博客逛逛</a>
+			</div>
+		</main>
+		<Footer />
+		<style>
+			.not-found {
+				text-align: center;
+			}
+			.elysia {
+				display: block;
+				margin: 0 auto 1em;
+				width: 140px;
+				height: 140px;
+				border-radius: 50%;
+				object-fit: cover;
+				box-shadow: 0 8px 24px rgba(31, 38, 135, 0.2);
+			}
+			h1 {
+				font-size: 4em;
+				margin: 0 0 0.2em;
+				background: linear-gradient(135deg, #ff90c0, #7ab5ff);
+				-webkit-background-clip: text;
+				background-clip: text;
+				color: transparent;
+				letter-spacing: 0.05em;
+			}
+			.big {
+				font-size: 1.3em;
+				margin: 0 0 0.5em;
+			}
+			.small {
+				color: rgb(var(--gray));
+				margin: 0 0 1.5em;
+			}
+			.actions {
+				display: flex;
+				justify-content: center;
+				gap: 0.8em;
+				flex-wrap: wrap;
+			}
+			.btn {
+				display: inline-block;
+				padding: 0.6em 1.4em;
+				background: rgba(255, 255, 255, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 999px;
+				color: rgb(var(--gray-dark));
+				text-decoration: none;
+				transition: background 0.15s ease, transform 0.15s ease;
+			}
+			.btn:hover {
+				background: rgba(255, 255, 255, 0.8);
+				transform: translateY(-2px);
+			}
+			.btn.primary {
+				background: var(--accent);
+				color: white;
+				border-color: var(--accent);
+			}
+			.btn.primary:hover {
+				background: var(--accent-dark);
+			}
+		</style>
+	</body>
+</html>
