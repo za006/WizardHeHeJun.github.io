@@ -31,7 +31,7 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		{
 			tickerItems.length > 1 && (
 				<div class="ticker" aria-label="最近文章">
-					<span class="ticker-label">📰</span>
+					<span class="ticker-dot" aria-hidden="true"></span>
 					<div class="ticker-window">
 						<ul class="ticker-list" style={`--ticker-count: ${recent.length}`}>
 							{tickerItems.map((p) => (
@@ -502,25 +502,46 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		overflow: hidden;
 	}
 
-	/* ━━━━━━━━━━ 最近文章 ticker（嵌入 nav，仅 ≤640） ━━━━━━━━━━ */
+	/* ━━━━━━━━━━ 最近文章 ticker（嵌入 nav，仅 ≤640） ━━━━━━━━━━
+	   像独立玻璃胶囊浮在 header 上：半透明背景 + 内/外阴影 + 圆角 */
 	.ticker {
 		display: none;
 		flex: 1;
 		align-items: center;
 		min-width: 0;
 		margin: 0 0.4em;
+		height: 2.4em;
+		padding: 0 0.9em 0 0.7em;
 		font-size: 0.85em;
+		line-height: 1.4;
+		background: rgba(255, 255, 255, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.55);
+		border-radius: 999px;
+		box-shadow:
+			inset 0 1px 2px rgba(255, 255, 255, 0.4),
+			inset 0 -1px 2px rgba(31, 38, 135, 0.04),
+			0 1px 4px rgba(31, 38, 135, 0.08);
+		backdrop-filter: blur(12px) saturate(180%);
+		-webkit-backdrop-filter: blur(12px) saturate(180%);
 	}
-	.ticker-label {
+	.ticker-dot {
 		flex-shrink: 0;
-		margin-right: 0.5em;
-		font-size: 1.05em;
-		opacity: 0.85;
+		width: 6px;
+		height: 6px;
+		margin-right: 0.6em;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 6px rgba(35, 55, 255, 0.5);
+		animation: ticker-pulse 2s ease-in-out infinite;
+	}
+	@keyframes ticker-pulse {
+		0%, 100% { opacity: 0.7; transform: scale(1); }
+		50% { opacity: 1; transform: scale(1.25); }
 	}
 	.ticker-window {
 		flex: 1;
 		min-width: 0;
-		height: 2.6em;
+		height: 100%;
 		overflow: hidden;
 		position: relative;
 	}
@@ -537,7 +558,7 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		animation: ticker-roll calc(var(--ticker-count, 5) * 5s) cubic-bezier(0.7, 0, 0.3, 1) infinite;
 	}
 	.ticker-list li {
-		height: 2.6em;
+		height: 2.4em;
 		display: flex;
 		align-items: center;
 		min-width: 0;
