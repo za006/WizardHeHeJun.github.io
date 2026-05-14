@@ -34,7 +34,7 @@ my-blog/
 │   │   └── blog-placeholder-*.jpg   # 模板自带占位图
 │   ├── components/                  # 可复用组件
 │   │   ├── BaseHead.astro           # <head> 通用元数据 + LXGW 字体 CDN
-│   │   ├── Header.astro             # 顶部导航（含「博客 ▾」hover dropdown + 🔍 搜索按钮）
+│   │   ├── Header.astro             # 顶部导航 + 移动端 ☰ 抽屉 + 最近文章 ticker（≤640 嵌入 nav 的胶囊滚动）
 │   │   ├── Footer.astro             # 全宽底部条 + 挂载所有全局组件
 │   │   ├── HeaderLink.astro         # 导航链接组件
 │   │   ├── FormattedDate.astro      # 中文日期格式化
@@ -86,12 +86,17 @@ my-blog/
 
 - 🌊 **毛玻璃风** —— 半透明白卡片 + `backdrop-filter: blur(18px) saturate(180%)`
 - 🖼️ **滑块式视差背景** —— 独立 `bg-layer` div + JS 同步 scroll 进度，页头看图顶 / 页尾看图底
+- 📐 **响应式四档断点** —— 移动 ≤640 / 平板 641-960 / 桌面 961-1280 / 大屏 >1400（再宽到 1800 解锁博文列表 1680px）
+- 🍔 **移动端 ☰ 抽屉** —— ≤720 折叠汉堡菜单，含可展开二级（博客 → 分类/标签）+ 社交快捷
+- 📰 **嵌入式 ticker** —— ≤640 nav 里挂胶囊状的最近文章自动滚动条（脉动小圆点 + 5s/项 + 无缝循环）
+- 🃏 **横向交错卡片** —— 博文列表单列横向，奇偶图左/图右交错；置顶用 21:9 全宽大图差异化
+- 🎯 **卡片微动效** —— hover 配图一次性 wiggle + 卡片上抬 + "阅读全文 →" 滑入；active 0.985 下沉反馈
 - 🔤 **霞鹜文楷** —— LXGW WenKai Screen via jsDelivr CDN，按字符 chunk 拆分
-- 🇨🇳 **中文友好** —— `lang="zh-CN"`、中文日期、中文字数 + 阅读时长
+- 🇨🇳 **中文友好** —— `lang="zh-CN"`、中文日期、中文字数 + 阅读时长、正文宽度 ≤ 960px（阅读上限）
 - 🔍 **Pagefind 搜索** —— 静态全文索引，overlay popover 风格（按 `/` 全局打开）
 - 🎵 **音乐播放器** —— APlayer + MetingJS，固定右下角，可换网易云任意歌单
 - ✨ **鼠标拖尾** —— 三色斜方块短拖尾，自动跳过触屏 + 减少动画偏好
-- 📌 **置顶机制** —— frontmatter `featured: true`，列表带徽章
+- 📌 **置顶机制** —— frontmatter `featured: true`，列表暖色金边大卡
 - 🏷️ **分类 + 标签** —— 5 个枚举分类 + 自由标签，自动生成聚合页
 - 🔗 **社交** —— GitHub / 哔哩哔哩 / X 一字排开
 
@@ -181,6 +186,11 @@ git push
 3. **竖版人像图必须用 `crop-hero.mjs` 预裁**——Astro `<Image>` 的 attention 算法对二次元不准
 4. **Pagefind 动态 import 必须用 `<script is:inline>`**——否则 Vite 在构建时报错
 5. **改完必须 `npm run build` 验证再 push**——别提交未构建过的代码
+6. **响应式只用四档断点**：640 / 960 / 1280 / 1400（再加 1800 给大屏）——不要发明 720 / 1024 之类
+7. **宽度用 `width: min(Npx, 100% - 2em)`** 替代 `width + max-width` 双写
+8. **全局 `box-sizing: border-box`** 必须有，否则 mobile 按钮 width:100% + padding 会溢出
+9. **`align-items: center` + 内部高列表 = 坑**：列表会被居中导致 translateY 数学错乱——必须用内层 `.window` 包裹 + `position: absolute` 列表（见 ticker 实现）
+10. **博客列表卡片用单列横向 + 奇偶交错**——置顶博文必须用独立大图样式差异化，不能只靠徽章
 
 ## License
 
