@@ -236,9 +236,18 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		color: var(--black);
 		border-bottom: 4px solid transparent;
 		text-decoration: none;
+		transition: color 0.18s ease, border-bottom-color 0.18s ease, background 0.18s ease;
+	}
+	nav a:hover {
+		color: var(--accent);
+		border-bottom-color: rgba(35, 55, 255, 0.35);
+		background: rgba(35, 55, 255, 0.04);
 	}
 	nav a.active {
 		text-decoration: none;
+		border-bottom-color: var(--accent);
+	}
+	nav a.active:hover {
 		border-bottom-color: var(--accent);
 	}
 	.social-links,
