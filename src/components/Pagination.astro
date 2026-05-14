@@ -1,0 +1,111 @@
+---
+interface Props {
+	currentPage: number;
+	totalPages: number;
+	prevUrl?: string;
+	nextUrl?: string;
+	baseUrl: string; // e.g. "/blog/"
+}
+
+const { currentPage, totalPages, prevUrl, nextUrl, baseUrl } = Astro.props;
+
+// 计算要显示的页码：始终显示第一页 / 当前页前后 1 / 最后一页，中间用 …
+function pageRange(current: number, total: number): (number | '...')[] {
+	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+	const pages: (number | '...')[] = [1];
+	if (current > 3) pages.push('...');
+	for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+		pages.push(i);
+	}
+	if (current < total - 2) pages.push('...');
+	pages.push(total);
+	return pages;
+}
+
+const pages = pageRange(currentPage, totalPages);
+const pageHref = (n: number) => (n === 1 ? baseUrl : `${baseUrl}${n}/`);
+---
+
+{
+	totalPages > 1 && (
+		<nav class="pagination" aria-label="分页">
+			{prevUrl ? (
+				<a href={prevUrl} class="page-btn">
+					← 上一页
+				</a>
+			) : (
+				<span class="page-btn disabled">← 上一页</span>
+			)}
+			<ul>
+				{pages.map((p) =>
+					p === '...' ? (
+						<li class="ellipsis">…</li>
+					) : (
+						<li class={p === currentPage ? 'active' : ''}>
+							{p === currentPage ? <span>{p}</span> : <a href={pageHref(p)}>{p}</a>}
+						</li>
+					),
+				)}
+			</ul>
+			{nextUrl ? (
+				<a href={nextUrl} class="page-btn">
+					下一页 →
+				</a>
+			) : (
+				<span class="page-btn disabled">下一页 →</span>
+			)}
+		</nav>
+	)
+}
+
+<style>
+	.pagination {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.6em;
+		margin-top: 2em;
+		flex-wrap: wrap;
+	}
+	.pagination ul {
+		display: flex;
+		gap: 0.4em;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+	.pagination li {
+		min-width: 2.2em;
+		text-align: center;
+	}
+	.pagination li a,
+	.pagination li span,
+	.page-btn {
+		display: inline-block;
+		padding: 0.3em 0.8em;
+		background: rgba(255, 255, 255, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.4);
+		border-radius: 8px;
+		color: rgb(var(--gray-dark));
+		text-decoration: none;
+		font-size: 0.9em;
+		transition: background 0.15s ease;
+	}
+	.pagination li a:hover,
+	.page-btn:not(.disabled):hover {
+		background: rgba(255, 255, 255, 0.8);
+	}
+	.pagination li.active span {
+		background: var(--accent);
+		color: white;
+		border-color: var(--accent);
+	}
+	.page-btn.disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+	.ellipsis {
+		color: rgb(var(--gray));
+		padding: 0.3em 0.4em;
+	}
+</style>

@@ -1,22 +1,27 @@
 ---
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
+import Pagination from '../../components/Pagination.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import { calcReadingStats } from '../../utils/reading-time';
 
-const posts = (await getCollection('blog')).sort((a, b) => {
-	// Featured posts first, then by pubDate desc
-	if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-	return b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
-});
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+	const posts = (await getCollection('blog')).sort((a, b) => {
+		if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+		return b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+	});
+	return paginate(posts, { pageSize: 6 });
+};
 
-// Pre-compute stats so the template stays clean
-const postsWithStats = posts.map((p) => ({
+const { page } = Astro.props;
+
+const postsWithStats = page.data.map((p) => ({
 	post: p,
 	stats: calcReadingStats(p.body ?? ''),
 }));
@@ -25,7 +30,10 @@ const postsWithStats = posts.map((p) => ({
 <!doctype html>
 <html lang="zh-CN">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead
+			title={page.currentPage === 1 ? SITE_TITLE : `第 ${page.currentPage} 页 · ${SITE_TITLE}`}
+			description={SITE_DESCRIPTION}
+		/>
 		<style>
 			main {
 				width: 1100px;
@@ -185,6 +193,13 @@ const postsWithStats = posts.map((p) => ({
 						))
 					}
 				</ul>
+				<Pagination
+					currentPage={page.currentPage}
+					totalPages={page.lastPage}
+					prevUrl={page.url.prev}
+					nextUrl={page.url.next}
+					baseUrl="/blog/"
+				/>
 			</section>
 			<Sidebar />
 		</main>
