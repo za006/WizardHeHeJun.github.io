@@ -38,7 +38,7 @@ const {
 				box-shadow: none;
 			}
 			.hero-image {
-				width: min(1020px, 100% - 2em);
+				width: min(1100px, 100% - 2em);
 				margin: 0 auto 1em;
 			}
 			.hero-image img {
@@ -48,9 +48,9 @@ const {
 				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
 			}
 			.prose {
-				width: min(760px, 100% - 2em);
+				width: min(840px, 100% - 2em);
 				margin: auto;
-				padding: 2.5em 2em;
+				padding: 2.5em 2.4em;
 				color: rgb(var(--gray-dark));
 				background: rgba(255, 255, 255, 0.6);
 				backdrop-filter: blur(18px) saturate(180%);
@@ -58,6 +58,15 @@ const {
 				border: 1px solid rgba(255, 255, 255, 0.45);
 				border-radius: 18px;
 				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+			}
+			@media (min-width: 1400px) {
+				.hero-image {
+					width: min(1280px, 100% - 4em);
+				}
+				.prose {
+					width: min(960px, 100% - 4em);
+					padding: 3em 3em;
+				}
 			}
 			@media (max-width: 640px) {
 				.prose {
