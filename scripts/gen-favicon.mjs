@@ -13,7 +13,13 @@ const sizes = [
 	{ name: 'apple-touch-icon.png', size: 180 },
 ];
 
+// Trim transparent padding once, reuse for all sizes
+const trimmed = await sharp(SRC).trim().toBuffer();
+
 for (const { name, size } of sizes) {
-	await sharp(SRC).resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(`${OUT}/${name}`);
+	await sharp(trimmed)
+		.resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+		.png()
+		.toFile(`${OUT}/${name}`);
 	console.log(`✓ ${name} (${size}x${size})`);
 }

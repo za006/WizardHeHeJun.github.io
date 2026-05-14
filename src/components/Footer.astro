@@ -36,9 +36,16 @@ const today = new Date();
 </footer>
 <style>
 	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		margin: 2em auto 1em;
+		padding: 1.5em 1em;
+		max-width: calc(100% - 2em);
+		background: rgba(255, 255, 255, 0.45);
+		backdrop-filter: blur(14px) saturate(180%);
+		-webkit-backdrop-filter: blur(14px) saturate(180%);
+		border: 1px solid rgba(255, 255, 255, 0.4);
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(31, 38, 135, 0.1);
+		color: rgb(var(--gray-dark));
 		text-align: center;
 	}
 	.social-links {
