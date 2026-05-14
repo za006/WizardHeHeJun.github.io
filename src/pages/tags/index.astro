@@ -1,0 +1,92 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+
+const posts = await getCollection('blog');
+const tagMap = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags) {
+		tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+	}
+}
+const tags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]);
+const maxCount = Math.max(...tags.map(([, c]) => c));
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`标签 · ${SITE_TITLE}`} description="按标签浏览所有文章" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>标签云</h1>
+			<p class="hint">共 {tags.length} 个标签</p>
+			<ul class="tag-cloud">
+				{
+					tags.map(([name, count]) => (
+						<li>
+							<a
+								href={`/tags/${encodeURIComponent(name)}/`}
+								style={`font-size: ${0.9 + (count / maxCount) * 0.8}em;`}
+							>
+								<span class="tag-name">{name}</span>
+								<span class="tag-count">{count}</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</main>
+		<Footer />
+		<style>
+			h1 {
+				margin-bottom: 0.2em;
+			}
+			.hint {
+				color: rgb(var(--gray));
+				margin-bottom: 1.5em;
+			}
+			.tag-cloud {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6em;
+			}
+			.tag-cloud a {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				padding: 0.3em 0.8em;
+				background: rgba(255, 255, 255, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 999px;
+				color: rgb(var(--gray-dark));
+				text-decoration: none;
+				transition: background 0.15s ease, transform 0.15s ease;
+			}
+			.tag-cloud a:hover {
+				background: var(--accent);
+				color: white;
+				transform: translateY(-2px);
+			}
+			.tag-count {
+				font-size: 0.8em;
+				color: rgb(var(--gray));
+				padding: 0.05em 0.4em;
+				background: rgba(0, 0, 0, 0.05);
+				border-radius: 999px;
+			}
+			.tag-cloud a:hover .tag-count {
+				background: rgba(255, 255, 255, 0.25);
+				color: white;
+			}
+		</style>
+	</body>
+</html>

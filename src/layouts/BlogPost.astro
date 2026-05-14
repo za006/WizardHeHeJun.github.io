@@ -8,7 +8,15 @@ import Header from '../components/Header.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	category,
+	tags = [],
+} = Astro.props;
 ---
 
 <html lang="zh-CN">
@@ -67,6 +75,36 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			.last-updated-on {
 				font-style: italic;
 			}
+			.meta-row {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6em;
+				justify-content: center;
+				margin-top: 0.6em;
+			}
+			.meta-row a {
+				display: inline-block;
+				padding: 0.15em 0.7em;
+				background: rgba(35, 55, 255, 0.08);
+				border: 1px solid rgba(35, 55, 255, 0.18);
+				border-radius: 999px;
+				font-size: 0.85em;
+				color: var(--accent);
+				text-decoration: none;
+				transition: background 0.15s ease;
+			}
+			.meta-row a:hover {
+				background: rgba(35, 55, 255, 0.16);
+			}
+			.meta-row .cat {
+				background: rgba(255, 200, 100, 0.25);
+				border-color: rgba(255, 180, 80, 0.5);
+				color: #b8860b;
+				font-weight: 600;
+			}
+			.meta-row .cat:hover {
+				background: rgba(255, 200, 100, 0.45);
+			}
 		</style>
 	</head>
 
@@ -90,6 +128,20 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 							}
 						</div>
 						<h1>{title}</h1>
+						{
+							(category || tags.length > 0) && (
+								<div class="meta-row">
+									{category && (
+										<a class="cat" href={`/categories/${encodeURIComponent(category)}/`}>
+											{category}
+										</a>
+									)}
+									{tags.map((t) => (
+										<a href={`/tags/${encodeURIComponent(t)}/`}>#{t}</a>
+									))}
+								</div>
+							)
+						}
 						<hr />
 					</div>
 					<slot />

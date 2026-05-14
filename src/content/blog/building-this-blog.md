@@ -4,6 +4,8 @@ description: '记录这个博客是怎么从零搭起来的——技术选型、
 pubDate: 'May 14 2026'
 featured: true
 heroImage: '../../assets/blog/building-this-blog.jpg'
+category: '项目分享'
+tags: ['Astro', 'GitHub Pages', '博客', '毛玻璃']
 ---
 
 ## 为什么要搭博客

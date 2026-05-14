@@ -15,6 +15,10 @@ const blog = defineCollection({
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
 			featured: z.boolean().optional().default(false),
+			category: z
+				.enum(['项目分享', '技术笔记', '学习总结', '生活随笔', '碎碎念'])
+				.default('项目分享'),
+			tags: z.array(z.string()).optional().default([]),
 		}),
 });
 

@@ -3,6 +3,8 @@ title: 'KNG：让 Claude Code 越用越准的知识驱动框架'
 description: '一个 Claude Code 插件，通过双知识库（能力库 + 项目库）+ 自动学习闭环，让 AI 在特定领域持续积累经验。'
 pubDate: 'May 12 2026'
 heroImage: '../../assets/blog/kng.jpg'
+category: '项目分享'
+tags: ['Claude Code', 'Agent', '知识库', 'SQLite']
 ---
 
 ## 是什么

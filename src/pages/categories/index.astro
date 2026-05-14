@@ -1,0 +1,81 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+
+const posts = await getCollection('blog');
+const categoryMap = new Map<string, number>();
+for (const post of posts) {
+	categoryMap.set(post.data.category, (categoryMap.get(post.data.category) ?? 0) + 1);
+}
+const categories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`分类 · ${SITE_TITLE}`} description="按分类浏览所有文章" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>分类</h1>
+			<p class="hint">共 {categories.length} 个分类，{posts.length} 篇文章</p>
+			<ul class="cat-list">
+				{
+					categories.map(([name, count]) => (
+						<li>
+							<a href={`/categories/${encodeURIComponent(name)}/`}>
+								<span class="cat-name">{name}</span>
+								<span class="cat-count">{count} 篇</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</main>
+		<Footer />
+		<style>
+			h1 {
+				margin-bottom: 0.2em;
+			}
+			.hint {
+				color: rgb(var(--gray));
+				margin-bottom: 1.5em;
+			}
+			.cat-list {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+				gap: 1em;
+			}
+			.cat-list li a {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 1em 1.2em;
+				background: rgba(255, 255, 255, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 12px;
+				text-decoration: none;
+				color: rgb(var(--gray-dark));
+				transition: transform 0.15s ease, background 0.15s ease;
+			}
+			.cat-list li a:hover {
+				background: rgba(255, 255, 255, 0.75);
+				transform: translateY(-2px);
+			}
+			.cat-name {
+				font-weight: 600;
+			}
+			.cat-count {
+				color: rgb(var(--gray));
+				font-size: 0.9em;
+			}
+		</style>
+	</body>
+</html>

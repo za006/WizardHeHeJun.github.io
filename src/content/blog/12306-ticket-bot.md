@@ -3,6 +3,8 @@ title: '12306 自动化抢票脚本：Selenium 实战'
 description: '一个用 Selenium + ChromeDriver 写的 12306 自动化抢票脚本——曾经的春运周末折腾产物。'
 pubDate: 'Jan 30 2026'
 heroImage: '../../assets/blog/12306-ticket-bot.jpg'
+category: '项目分享'
+tags: ['Selenium', 'Python', '爬虫', '自动化']
 ---
 
 ## 起因
