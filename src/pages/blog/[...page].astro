@@ -64,57 +64,82 @@ const postsWithStats = page.data.map((p) => ({
 				border-radius: 18px;
 				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 			}
-			@media (max-width: 960px) {
-				main {
-					grid-template-columns: 1fr;
-				}
-			}
+
+			/* —— 列表容器 —— */
 			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
+				list-style: none;
 				margin: 0;
 				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 1.2em;
 			}
-			ul li {
-				width: min(calc(50% - 1rem), 100%);
-			}
-			ul li * {
+
+			/* —— 单张卡片：图左 320 + 文右 —— */
+			.post-card a {
+				display: grid;
+				grid-template-columns: 320px minmax(0, 1fr);
+				gap: 1.5em;
+				padding: 1.2em;
+				background: rgba(255, 255, 255, 0.45);
+				border: 1px solid rgba(255, 255, 255, 0.5);
+				border-radius: 16px;
 				text-decoration: none;
-				transition: 0.2s ease;
+				color: rgb(var(--gray-dark));
+				overflow: hidden;
+				transition:
+					transform 0.2s ease,
+					box-shadow 0.2s ease,
+					background 0.2s ease;
 			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
+			/* 偶数项：图右文左 */
+			.post-card:nth-child(even) a {
+				grid-template-columns: minmax(0, 1fr) 320px;
 			}
-			ul li:first-child img {
-				width: 100%;
+			.post-card:nth-child(even) .card-media {
+				order: 2;
 			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
+
+			.card-media {
+				overflow: hidden;
 				border-radius: 12px;
+				aspect-ratio: 16 / 10;
+				background: rgba(0, 0, 0, 0.04);
 			}
-			ul li a {
+			.card-media img {
 				display: block;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				transition: transform 0.3s ease;
+			}
+			.card-media-placeholder {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 2.4em;
+				opacity: 0.3;
+			}
+
+			.card-body {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				min-width: 0;
 			}
 			.title {
-				margin: 0;
+				margin: 0 0 0.4em;
 				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
+				font-size: 1.25em;
+				line-height: 1.3;
+				transition: color 0.15s ease;
 			}
 			.meta {
-				margin: 0.3em 0 0.5em;
+				margin: 0 0 0.5em;
 				color: rgb(var(--gray));
-				font-size: 0.85em;
+				font-size: 0.82em;
 				display: flex;
 				flex-wrap: wrap;
 				gap: 0.4em;
@@ -124,19 +149,30 @@ const postsWithStats = page.data.map((p) => ({
 				opacity: 0.5;
 			}
 			.excerpt {
-				margin: 0.5em 0 0;
+				margin: 0;
 				color: rgb(var(--gray-dark));
 				font-size: 0.92em;
-				line-height: 1.5;
+				line-height: 1.55;
 				display: -webkit-box;
 				-webkit-line-clamp: 2;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
-				opacity: 0.8;
+				opacity: 0.85;
+			}
+			.more {
+				display: inline-block;
+				margin-top: 0.7em;
+				font-size: 0.85em;
+				color: var(--accent);
+				opacity: 0;
+				transform: translateX(-4px);
+				transition:
+					opacity 0.2s ease,
+					transform 0.2s ease;
 			}
 			.pin-badge {
 				display: inline-block;
-				font-size: 0.55em;
+				font-size: 0.6em;
 				padding: 0.2em 0.6em;
 				margin-right: 0.5em;
 				background: rgba(255, 200, 100, 0.3);
@@ -146,26 +182,75 @@ const postsWithStats = page.data.map((p) => ({
 				vertical-align: middle;
 				font-weight: 600;
 			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
+
+			/* —— hover：卡片上抬 + 图抖一下 —— */
+			.post-card a:hover {
+				transform: translateY(-4px);
+				background: rgba(255, 255, 255, 0.7);
+				box-shadow: 0 12px 36px rgba(31, 38, 135, 0.22);
 			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
+			.post-card a:hover .title {
+				color: var(--accent);
 			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
+			.post-card a:hover .card-media img {
+				animation: card-wiggle 0.5s ease;
+			}
+			.post-card a:hover .more {
+				opacity: 1;
+				transform: translateX(0);
+			}
+			@keyframes card-wiggle {
+				0%, 100% { transform: scale(1) rotate(0deg); }
+				20%      { transform: scale(1.05) rotate(-1.2deg); }
+				60%      { transform: scale(1.05) rotate(1.2deg); }
+				80%      { transform: scale(1.05) rotate(-0.6deg); }
+			}
+			/* —— active：按下反馈 —— */
+			.post-card a:active {
+				transform: scale(0.985) translateY(-2px);
+				box-shadow: 0 4px 12px rgba(31, 38, 135, 0.15);
+			}
+
+			/* —— 平板 (≤960)：sidebar 已隐藏，卡片图缩小 —— */
+			@media (max-width: 960px) {
+				main {
+					grid-template-columns: 1fr;
 				}
-				ul li {
-					width: 100%;
-					text-align: center;
+				.post-card a,
+				.post-card:nth-child(even) a {
+					grid-template-columns: 220px minmax(0, 1fr);
 				}
-				ul li:first-child {
-					margin-bottom: 0;
+				.post-card:nth-child(even) .card-media {
+					order: 0;
 				}
-				ul li:first-child .title {
-					font-size: 1.563em;
+			}
+			/* —— 移动 (≤640)：图上文下 —— */
+			@media (max-width: 640px) {
+				.posts-card {
+					padding: 1.2em 1em;
+				}
+				.post-card a,
+				.post-card:nth-child(even) a {
+					grid-template-columns: 1fr;
+					gap: 0.8em;
+				}
+				.card-media {
+					aspect-ratio: 16 / 9;
+				}
+				.title {
+					font-size: 1.1em;
+				}
+			}
+			/* —— 减少动画偏好用户：跳过 wiggle —— */
+			@media (prefers-reduced-motion: reduce) {
+				.post-card a {
+					transition: none;
+				}
+				.post-card a:hover .card-media img {
+					animation: none;
+				}
+				.card-media img {
+					transition: none;
 				}
 			}
 		</style>
@@ -178,23 +263,30 @@ const postsWithStats = page.data.map((p) => ({
 				<ul>
 					{
 						postsWithStats.map(({ post, stats }) => (
-							<li>
+							<li class="post-card">
 								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">
-										{post.data.featured && <span class="pin-badge">📌 置顶</span>}
-										{post.data.title}
-									</h4>
-									<p class="meta">
-										<FormattedDate date={post.data.pubDate} />
-										<span class="dot">·</span>
-										<span>{stats.wordCount} 字</span>
-										<span class="dot">·</span>
-										<span>{stats.readingTime} 分钟</span>
-									</p>
-									<p class="excerpt">{post.data.description}</p>
+									<div class="card-media">
+										{post.data.heroImage ? (
+											<Image width={640} height={400} src={post.data.heroImage} alt="" />
+										) : (
+											<div class="card-media-placeholder">✨</div>
+										)}
+									</div>
+									<div class="card-body">
+										<p class="meta">
+											<FormattedDate date={post.data.pubDate} />
+											<span class="dot">·</span>
+											<span>{stats.wordCount} 字</span>
+											<span class="dot">·</span>
+											<span>{stats.readingTime} 分钟</span>
+										</p>
+										<h4 class="title">
+											{post.data.featured && <span class="pin-badge">📌 置顶</span>}
+											{post.data.title}
+										</h4>
+										<p class="excerpt">{post.data.description}</p>
+										<span class="more">阅读全文 →</span>
+									</div>
 								</a>
 							</li>
 						))
