@@ -1,0 +1,76 @@
+---
+// 鼠标轨迹：节流的 mousemove → 在指针位置生成一个旋转的彩色小方块（短拖尾）
+// 触屏设备自动跳过；prefers-reduced-motion 时也不创建
+---
+
+<script is:inline>
+	(function () {
+		// 跳过触屏设备 + 减少动画偏好
+		if (
+			window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		) {
+			return;
+		}
+
+		const colors = ['#ff90c0', '#c280ff', '#7ab5ff'];
+		let lastT = 0;
+		let colorIdx = 0;
+		const MAX = 12; // 最大同时存在数量
+		const queue = [];
+
+		document.addEventListener(
+			'mousemove',
+			(e) => {
+				const now = performance.now();
+				if (now - lastT < 35) return; // 节流 ~28fps
+				lastT = now;
+
+				const dot = document.createElement('span');
+				dot.className = 'cursor-trail-dot';
+				dot.style.left = e.clientX + 'px';
+				dot.style.top = e.clientY + 'px';
+				dot.style.background = colors[colorIdx];
+				colorIdx = (colorIdx + 1) % colors.length;
+
+				document.body.appendChild(dot);
+				queue.push(dot);
+				if (queue.length > MAX) {
+					const old = queue.shift();
+					old?.remove();
+				}
+				setTimeout(() => {
+					dot.remove();
+					const i = queue.indexOf(dot);
+					if (i >= 0) queue.splice(i, 1);
+				}, 500);
+			},
+			{ passive: true },
+		);
+	})();
+</script>
+
+<style is:global>
+	.cursor-trail-dot {
+		position: fixed;
+		pointer-events: none;
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+		transform: translate(-50%, -50%) rotate(45deg);
+		opacity: 0.7;
+		z-index: 9999;
+		animation: cursor-trail-fade 500ms ease-out forwards;
+		box-shadow: 0 0 6px currentColor;
+	}
+	@keyframes cursor-trail-fade {
+		0% {
+			opacity: 0.7;
+			transform: translate(-50%, -50%) rotate(45deg) scale(1);
+		}
+		100% {
+			opacity: 0;
+			transform: translate(-50%, -50%) rotate(180deg) scale(0.2);
+		}
+	}
+</style>

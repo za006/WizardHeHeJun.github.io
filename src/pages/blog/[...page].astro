@@ -45,7 +45,7 @@ const postsWithStats = page.data.map((p) => ({
 				box-shadow: none;
 				padding: 1.5em 1em;
 				display: grid;
-				grid-template-columns: minmax(0, 1fr) 280px;
+				grid-template-columns: 280px minmax(0, 1fr);
 				gap: 1.5em;
 				align-items: start;
 			}
@@ -167,6 +167,7 @@ const postsWithStats = page.data.map((p) => ({
 	<body>
 		<Header />
 		<main>
+			<Sidebar />
 			<section class="posts-card">
 				<ul>
 					{
@@ -201,7 +202,6 @@ const postsWithStats = page.data.map((p) => ({
 					baseUrl="/blog/"
 				/>
 			</section>
-			<Sidebar />
 		</main>
 		<Footer />
 	</body>
