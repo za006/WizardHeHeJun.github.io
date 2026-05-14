@@ -32,13 +32,15 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			tickerItems.length > 1 && (
 				<div class="ticker" aria-label="最近文章">
 					<span class="ticker-label">📰</span>
-					<ul class="ticker-list" style={`--ticker-count: ${recent.length}`}>
-						{tickerItems.map((p) => (
-							<li>
-								<a href={`/blog/${p.id}/`}>{p.data.title}</a>
-							</li>
-						))}
-					</ul>
+					<div class="ticker-window">
+						<ul class="ticker-list" style={`--ticker-count: ${recent.length}`}>
+							{tickerItems.map((p) => (
+								<li>
+									<a href={`/blog/${p.id}/`}>{p.data.title}</a>
+								</li>
+							))}
+						</ul>
+					</div>
 				</div>
 			)
 		}
@@ -96,9 +98,22 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	</div>
 	<nav class="drawer-nav">
 		<a href="/">首页</a>
-		<a href="/blog/">博客</a>
-		<a href="/categories/" class="sub">分类</a>
-		<a href="/tags/" class="sub">标签</a>
+		<div class="drawer-group">
+			<div class="drawer-row">
+				<a href="/blog/">博客</a>
+				<button
+					type="button"
+					class="drawer-caret"
+					data-sub-toggle
+					aria-expanded="false"
+					aria-label="展开分类与标签"
+				>▾</button>
+			</div>
+			<div class="drawer-sub" data-sub>
+				<a href="/categories/" class="sub">分类</a>
+				<a href="/tags/" class="sub">标签</a>
+			</div>
+		</div>
 		<a href="/friends/">友链</a>
 		<a href="/about/">关于</a>
 	</nav>
@@ -141,6 +156,18 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			if (e.key === 'Escape' && drawer.classList.contains('is-open')) close();
 		});
 		drawer.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
+
+		// 子菜单展开/收起
+		const subToggle = drawer.querySelector('[data-sub-toggle]');
+		const sub = drawer.querySelector('[data-sub]');
+		if (subToggle && sub) {
+			subToggle.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const expanded = subToggle.getAttribute('aria-expanded') === 'true';
+				subToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+				sub.classList.toggle('is-open');
+			});
+		}
 	})();
 </script>
 
@@ -413,6 +440,38 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		left: 1em;
 		opacity: 0.5;
 	}
+	/* —— 可折叠组（博客 + 分类/标签） —— */
+	.drawer-row {
+		display: flex;
+		align-items: center;
+	}
+	.drawer-row > a {
+		flex: 1;
+	}
+	.drawer-caret {
+		background: transparent;
+		border: none;
+		padding: 0.6em 0.8em;
+		font-size: 0.9em;
+		color: rgb(var(--gray));
+		cursor: pointer;
+		border-radius: 8px;
+		transition: background 0.15s ease, transform 0.2s ease;
+	}
+	.drawer-caret:hover {
+		background: rgba(0, 0, 0, 0.05);
+	}
+	.drawer-caret[aria-expanded='true'] {
+		transform: rotate(180deg);
+	}
+	.drawer-sub {
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.25s ease;
+	}
+	.drawer-sub.is-open {
+		max-height: 200px;
+	}
 	.drawer-divider {
 		margin: 0.8em 0 0.6em;
 		border-top: 1px dashed rgba(0, 0, 0, 0.1);
@@ -447,13 +506,10 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	.ticker {
 		display: none;
 		flex: 1;
-		height: 2.6em;
-		overflow: hidden;
-		position: relative;
-		min-width: 0;
-		margin: 0 0.2em;
-		font-size: 0.85em;
 		align-items: center;
+		min-width: 0;
+		margin: 0 0.4em;
+		font-size: 0.85em;
 	}
 	.ticker-label {
 		flex-shrink: 0;
@@ -461,7 +517,18 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		font-size: 1.05em;
 		opacity: 0.85;
 	}
+	.ticker-window {
+		flex: 1;
+		min-width: 0;
+		height: 2.6em;
+		overflow: hidden;
+		position: relative;
+	}
 	.ticker-list {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
 		list-style: none;
 		margin: 0;
 		padding: 0;
