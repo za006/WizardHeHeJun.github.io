@@ -1,8 +1,26 @@
 ---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import elysia from '../assets/elysia.png';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const recent = posts.slice(0, 3);
+
+// Hero 的打字机短句池——刷新会随机一句
+const typeLines = [
+	'哇～终于有人来了',
+	'欸～你怎么找到这里的',
+	'欢迎来访，请随便逛',
+	'刚好泡了壶茶，要喝点吗',
+	'缘分这种东西真奇妙',
+];
 ---
 
 <!doctype html>
@@ -13,17 +31,426 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<body>
 		<Header />
 		<main>
-			<h1>👋 你好，欢迎来到我的小宇宙</h1>
-			<p>
-				这里是 <strong>WizardHeHeJun's Notes</strong>——一个用来放项目分享、技术笔记和碎碎念的地方。
-			</p>
-			<p>
-				去 <a href="/blog">博客</a> 看看最近写了什么，或者去 <a href="/about">关于</a> 了解一下我是谁。
-			</p>
-			<p>
-				如果你恰好读到了什么有用的内容，那就是我写这些字最满意的回报啦。
-			</p>
+			<!-- ━━━━━━━━━━ Hero ━━━━━━━━━━ -->
+			<section class="hero">
+				<p class="typewriter">
+					<span id="type-text"></span><span class="cursor">|</span>
+				</p>
+
+				<Image src={elysia} width={140} height={140} alt="头像" class="avatar" />
+
+				<h1 class="name">WizardHeHeJun</h1>
+				<p class="romaji">魔法师·何鹤君</p>
+
+				<div class="pills">
+					<span class="pill">🤖 AI 工程师</span>
+					<span class="pill">🧪 测试自动化</span>
+					<span class="pill">✨ ACG 爱好者</span>
+				</div>
+
+				<a class="callout" href="/blog/kng/">
+					如果你也用 Claude Code，试试 → <strong>KNG 知识驱动框架</strong> 🧠
+				</a>
+
+				<p class="tagline">
+					项目分享、技术笔记，和一些不想被时间冲走的碎碎念。<br />
+					这个小宇宙装着我写过的代码、想通的事，以及偶尔的胡思乱想。
+				</p>
+
+				<div class="cta">
+					<a href="/blog/" class="btn primary">看看我写了啥 ✍</a>
+					<a href="/about/" class="btn ghost">了解更多 →</a>
+				</div>
+			</section>
+
+			<!-- ━━━━━━━━━━ 最近写了点啥 ━━━━━━━━━━ -->
+			<section class="recent">
+				<header>
+					<h2>最近写了点啥 ✍</h2>
+					<a href="/blog/" class="more">全部 →</a>
+				</header>
+				<ul class="post-cards">
+					{
+						recent.map((post) => (
+							<li>
+								<a href={`/blog/${post.id}/`}>
+									<p class="meta">
+										<FormattedDate date={post.data.pubDate} />
+										<span class="dot">·</span>
+										<span class="category">{post.data.category}</span>
+									</p>
+									<h3>{post.data.title}</h3>
+									<p class="excerpt">{post.data.description}</p>
+									{post.data.tags.length > 0 && (
+										<div class="tags">
+											{post.data.tags.map((t) => (
+												<span class="tag">#{t}</span>
+											))}
+										</div>
+									)}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</section>
+
+			<!-- ━━━━━━━━━━ 现在在干嘛 ━━━━━━━━━━ -->
+			<section class="now">
+				<header>
+					<h2>现在在干嘛</h2>
+					<span class="now-label">📍 Right now...</span>
+				</header>
+				<div class="now-grid">
+					<div class="now-item">
+						<div class="now-icon">📍</div>
+						<div>
+							<div class="now-title">中国</div>
+							<div class="now-sub">在家写代码 + 折腾这个博客</div>
+						</div>
+					</div>
+					<div class="now-item">
+						<div class="now-icon">💻</div>
+						<div>
+							<div class="now-title">在做 KNG</div>
+							<div class="now-sub">知识驱动型 Agent 框架</div>
+						</div>
+					</div>
+					<div class="now-item">
+						<div class="now-icon">📚</div>
+						<div>
+							<div class="now-title">在学</div>
+							<div class="now-sub">Claude Code SDK / Agent 编排</div>
+						</div>
+					</div>
+					<div class="now-item">
+						<div class="now-icon">🎮</div>
+						<div>
+							<div class="now-title">摸鱼</div>
+							<div class="now-sub">偶尔玩崩坏 3 / 看番</div>
+						</div>
+					</div>
+				</div>
+			</section>
 		</main>
 		<Footer />
+
+		<!-- ━━━━━━━━━━ 打字机脚本 ━━━━━━━━━━ -->
+		<script is:inline define:vars={{ typeLines }}>
+			const target = document.getElementById('type-text');
+			const line = typeLines[Math.floor(Math.random() * typeLines.length)];
+			let i = 0;
+			function step() {
+				if (i <= line.length) {
+					target.textContent = line.slice(0, i);
+					i++;
+					setTimeout(step, 120 + Math.random() * 60);
+				}
+			}
+			step();
+		</script>
+
+		<style>
+			main {
+				width: 920px;
+				background: transparent;
+				backdrop-filter: none;
+				-webkit-backdrop-filter: none;
+				border: none;
+				border-radius: 0;
+				box-shadow: none;
+				padding: 1em;
+				display: flex;
+				flex-direction: column;
+				gap: 1.5em;
+			}
+
+			/* —— Hero —— */
+			.hero {
+				text-align: center;
+				padding: 2.5em 1.8em;
+				background: rgba(255, 255, 255, 0.55);
+				backdrop-filter: blur(18px) saturate(180%);
+				-webkit-backdrop-filter: blur(18px) saturate(180%);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 18px;
+				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+			}
+			.typewriter {
+				font-size: 1.25em;
+				color: #ff7a45;
+				margin: 0 0 1em;
+				min-height: 1.5em;
+				font-weight: 500;
+			}
+			.cursor {
+				display: inline-block;
+				margin-left: 1px;
+				color: #ff7a45;
+				animation: blink 1s step-end infinite;
+			}
+			@keyframes blink {
+				50% { opacity: 0; }
+			}
+			.avatar {
+				display: block;
+				margin: 0 auto 0.6em;
+				width: 110px;
+				height: 110px;
+				border-radius: 50%;
+				object-fit: cover;
+				border: 4px solid rgba(255, 255, 255, 0.7);
+				box-shadow: 0 0 0 4px rgba(194, 128, 255, 0.2),
+					0 8px 24px rgba(31, 38, 135, 0.18);
+			}
+			.name {
+				font-size: 2.8em;
+				margin: 0.2em 0 0;
+				font-weight: 800;
+				letter-spacing: 0.02em;
+				color: rgb(var(--gray-dark));
+			}
+			.romaji {
+				margin: 0.1em 0 1em;
+				color: rgb(var(--gray));
+				font-size: 1em;
+				letter-spacing: 0.1em;
+			}
+			.pills {
+				display: flex;
+				justify-content: center;
+				flex-wrap: wrap;
+				gap: 0.6em;
+				margin-bottom: 1em;
+			}
+			.pill {
+				display: inline-block;
+				padding: 0.35em 1em;
+				background: rgba(255, 255, 255, 0.7);
+				border: 1px solid rgba(255, 255, 255, 0.8);
+				border-radius: 999px;
+				font-size: 0.88em;
+				color: rgb(var(--gray-dark));
+				box-shadow: 0 2px 6px rgba(31, 38, 135, 0.06);
+			}
+			.callout {
+				display: inline-block;
+				margin: 0 auto 1.2em;
+				padding: 0.5em 1.2em;
+				background: rgba(255, 244, 230, 0.85);
+				border: 1px solid rgba(255, 144, 96, 0.3);
+				border-radius: 999px;
+				color: #b8541e;
+				font-size: 0.92em;
+				text-decoration: none;
+				transition:
+					background 0.18s ease,
+					transform 0.18s ease;
+			}
+			.callout:hover {
+				background: rgba(255, 230, 200, 0.95);
+				transform: translateY(-2px);
+			}
+			.callout strong {
+				color: #8a3a14;
+			}
+			.tagline {
+				color: rgb(var(--gray));
+				font-size: 0.95em;
+				line-height: 1.7;
+				margin: 0.5em 0 1.5em;
+			}
+			.cta {
+				display: flex;
+				justify-content: center;
+				gap: 0.8em;
+				flex-wrap: wrap;
+			}
+			.btn {
+				display: inline-block;
+				padding: 0.7em 1.6em;
+				border-radius: 12px;
+				text-decoration: none;
+				font-size: 0.95em;
+				font-weight: 600;
+				transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+			}
+			.btn.primary {
+				background: linear-gradient(135deg, #4a8c5e, #3a7050);
+				color: white;
+				box-shadow: 0 4px 12px rgba(58, 112, 80, 0.3);
+			}
+			.btn.primary:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 18px rgba(58, 112, 80, 0.4);
+			}
+			.btn.ghost {
+				background: rgba(255, 255, 255, 0.55);
+				color: rgb(var(--gray-dark));
+				border: 1.5px solid rgba(184, 84, 30, 0.25);
+			}
+			.btn.ghost:hover {
+				background: rgba(255, 255, 255, 0.85);
+				transform: translateY(-2px);
+			}
+
+			/* —— 通用 section header —— */
+			section header {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				margin-bottom: 1em;
+			}
+			section header h2 {
+				margin: 0;
+				font-size: 1.6em;
+			}
+			section header .more {
+				color: rgb(var(--gray));
+				text-decoration: none;
+				font-size: 0.9em;
+				transition: color 0.15s ease;
+			}
+			section header .more:hover {
+				color: var(--accent);
+			}
+
+			/* —— 最近文章 —— */
+			.recent {
+				padding: 1.8em 1.6em;
+				background: rgba(255, 255, 255, 0.5);
+				backdrop-filter: blur(16px) saturate(170%);
+				-webkit-backdrop-filter: blur(16px) saturate(170%);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 18px;
+				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+			}
+			.post-cards {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 0.8em;
+			}
+			.post-cards a {
+				display: block;
+				padding: 1em 1.2em;
+				background: rgba(255, 255, 255, 0.4);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 12px;
+				text-decoration: none;
+				color: rgb(var(--gray-dark));
+				transition: background 0.15s ease, transform 0.15s ease;
+			}
+			.post-cards a:hover {
+				background: rgba(255, 255, 255, 0.7);
+				transform: translateX(4px);
+			}
+			.post-cards .meta {
+				margin: 0;
+				font-size: 0.8em;
+				color: rgb(var(--gray));
+				display: flex;
+				gap: 0.4em;
+				align-items: center;
+			}
+			.post-cards .meta .dot {
+				opacity: 0.5;
+			}
+			.post-cards .category {
+				color: var(--accent);
+				font-weight: 600;
+			}
+			.post-cards h3 {
+				margin: 0.4em 0 0.3em;
+				font-size: 1.15em;
+				color: rgb(var(--gray-dark));
+			}
+			.post-cards .excerpt {
+				margin: 0 0 0.6em;
+				font-size: 0.9em;
+				color: rgb(var(--gray));
+				line-height: 1.55;
+				display: -webkit-box;
+				-webkit-line-clamp: 1;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+			.post-cards .tags {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.4em;
+			}
+			.post-cards .tag {
+				display: inline-block;
+				padding: 0.1em 0.6em;
+				background: rgba(255, 200, 100, 0.18);
+				border: 1px solid rgba(255, 180, 80, 0.3);
+				border-radius: 999px;
+				font-size: 0.78em;
+				color: #b8860b;
+			}
+
+			/* —— Now —— */
+			.now {
+				padding: 1.8em 1.6em;
+				background: rgba(255, 255, 255, 0.5);
+				backdrop-filter: blur(16px) saturate(170%);
+				-webkit-backdrop-filter: blur(16px) saturate(170%);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 18px;
+				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+			}
+			.now-label {
+				color: #ff7a45;
+				font-size: 0.95em;
+			}
+			.now-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 1em;
+			}
+			.now-item {
+				display: flex;
+				gap: 0.8em;
+				align-items: flex-start;
+				padding: 0.8em;
+				background: rgba(255, 255, 255, 0.4);
+				border-radius: 10px;
+			}
+			.now-icon {
+				font-size: 1.6em;
+				line-height: 1;
+			}
+			.now-title {
+				font-weight: 600;
+				font-size: 0.98em;
+				color: rgb(var(--gray-dark));
+			}
+			.now-sub {
+				margin-top: 0.2em;
+				font-size: 0.85em;
+				color: rgb(var(--gray));
+			}
+
+			@media (max-width: 720px) {
+				main {
+					width: 100%;
+				}
+				.name {
+					font-size: 2em;
+				}
+				.cta {
+					flex-direction: column;
+				}
+				.btn {
+					width: 100%;
+				}
+				section header h2 {
+					font-size: 1.3em;
+				}
+			}
+		</style>
 	</body>
 </html>
