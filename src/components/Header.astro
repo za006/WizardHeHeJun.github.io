@@ -28,6 +28,20 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		</button>
 
 		<h2><a href="/">{SITE_TITLE}</a></h2>
+		{
+			tickerItems.length > 1 && (
+				<div class="ticker" aria-label="最近文章">
+					<span class="ticker-label">📰</span>
+					<ul class="ticker-list" style={`--ticker-count: ${recent.length}`}>
+						{tickerItems.map((p) => (
+							<li>
+								<a href={`/blog/${p.id}/`}>{p.data.title}</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			)
+		}
 		<div class="internal-links">
 			<HeaderLink href="/">首页</HeaderLink>
 			<div class="dropdown">
@@ -72,22 +86,6 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		</div>
 	</nav>
 </header>
-
-<!-- ━━━━━━━━━━ 最近文章 ticker（仅 ≤640） ━━━━━━━━━━ -->
-{
-	tickerItems.length > 1 && (
-		<div class="ticker" aria-label="最近文章">
-			<span class="ticker-label">📰 最近</span>
-			<ul class="ticker-list" style={`--ticker-count: ${recent.length}`}>
-				{tickerItems.map((p) => (
-					<li>
-						<a href={`/blog/${p.id}/`}>{p.data.title}</a>
-					</li>
-				))}
-			</ul>
-		</div>
-	)
-}
 
 <!-- ━━━━━━━━━━ 移动端侧边抽屉 ━━━━━━━━━━ -->
 <div class="drawer-backdrop" data-drawer-backdrop aria-hidden="true"></div>
@@ -445,47 +443,37 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		overflow: hidden;
 	}
 
-	/* ━━━━━━━━━━ 最近文章 ticker ━━━━━━━━━━ */
+	/* ━━━━━━━━━━ 最近文章 ticker（嵌入 nav，仅 ≤640） ━━━━━━━━━━ */
 	.ticker {
 		display: none;
-		position: relative;
-		height: 2.4em;
+		flex: 1;
+		height: 2.6em;
 		overflow: hidden;
-		background: rgba(255, 255, 255, 0.45);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+		position: relative;
+		min-width: 0;
+		margin: 0 0.2em;
 		font-size: 0.85em;
+		align-items: center;
 	}
 	.ticker-label {
-		position: absolute;
-		left: 0.8em;
-		top: 50%;
-		transform: translateY(-50%);
-		z-index: 2;
-		padding-right: 0.7em;
-		color: var(--accent);
-		font-weight: 600;
-		font-size: 0.85em;
-		background: linear-gradient(
-			90deg,
-			rgba(255, 255, 255, 0.85) 60%,
-			rgba(255, 255, 255, 0)
-		);
-		pointer-events: none;
+		flex-shrink: 0;
+		margin-right: 0.5em;
+		font-size: 1.05em;
+		opacity: 0.85;
 	}
 	.ticker-list {
 		list-style: none;
 		margin: 0;
-		padding: 0 1em 0 5.2em;
+		padding: 0;
 		display: flex;
 		flex-direction: column;
-		animation: ticker-roll calc(var(--ticker-count, 5) * 3s) cubic-bezier(0.7, 0, 0.3, 1) infinite;
+		animation: ticker-roll calc(var(--ticker-count, 5) * 5s) cubic-bezier(0.7, 0, 0.3, 1) infinite;
 	}
 	.ticker-list li {
-		height: 2.4em;
+		height: 2.6em;
 		display: flex;
 		align-items: center;
+		min-width: 0;
 	}
 	.ticker-list a {
 		display: block;
@@ -499,17 +487,22 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	.ticker-list a:hover {
 		color: var(--accent);
 	}
+	/* 6 items 在容器内（5 + 1 复制实现无缝循环）。
+	   translateY 百分比相对自身高度，每次移动 100%/6 ≈ 16.667% 切换一项 */
 	@keyframes ticker-roll {
 		0%, 16% { transform: translateY(0); }
-		20%, 36% { transform: translateY(-100%); }
-		40%, 56% { transform: translateY(-200%); }
-		60%, 76% { transform: translateY(-300%); }
-		80%, 96% { transform: translateY(-400%); }
-		100% { transform: translateY(-500%); }
+		20%, 36% { transform: translateY(-16.667%); }
+		40%, 56% { transform: translateY(-33.333%); }
+		60%, 76% { transform: translateY(-50%); }
+		80%, 96% { transform: translateY(-66.667%); }
+		100% { transform: translateY(-83.333%); }
 	}
 	@media (max-width: 640px) {
 		.ticker {
-			display: block;
+			display: flex;
+		}
+		h2 {
+			display: none;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
