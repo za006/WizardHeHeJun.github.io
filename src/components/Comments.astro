@@ -16,6 +16,12 @@ const {
 } = Astro.props;
 
 const dataTerm = mapping === 'specific' ? term : undefined;
+
+// giscus 自定义主题需要 HTTPS 绝对 URL（iframe 跨域加载）
+// dev 模式下 localhost 是 HTTP，加载到 HTTPS 的 giscus iframe 里会被 mixed-content 拦截
+// 所以 dev 回退到内置 `light`，仅在 build/部署后启用自定义主题
+const siteOrigin = (Astro.site?.toString() || 'https://wizardhehejun.github.io/').replace(/\/$/, '');
+const giscusTheme = import.meta.env.DEV ? 'light' : `${siteOrigin}/giscus-theme.css`;
 ---
 
 <section class="comments-card">
@@ -35,7 +41,7 @@ const dataTerm = mapping === 'specific' ? term : undefined;
 			data-reactions-enabled="1"
 			data-emit-metadata="0"
 			data-input-position="bottom"
-			data-theme="light"
+			data-theme={giscusTheme}
 			data-lang="zh-CN"
 			data-loading="lazy"
 			crossorigin="anonymous"
