@@ -87,17 +87,20 @@ main {
 	background-color: transparent !important;
 }
 
-/* —— 4. 「最早 / 最新」排序 tab 组（segmented control）
-       注意：iframe 内 backdrop-filter 无效，纯靠 alpha 透出底色 —— */
+/* —— 4. 「最早 / 最新」排序按钮组
+       giscus 实际用的是 Tailwind 工具类的 button 对，不一定是 [role=tablist]。
+       策略：把所有 .btn / button 默认改透明，只用边框勾轮廓；
+       active/aria-pressed 用粉色文本 + 浅粉色淡填充表达选中态。 —— */
 .gsc-tab-list,
 [role="tablist"] {
-	background: rgba(255, 255, 255, 0.25) !important;
-	border: 1px solid rgba(255, 255, 255, 0.45) !important;
+	background: transparent !important;
+	border: 1px solid rgba(255, 255, 255, 0.4) !important;
 	border-radius: 999px !important;
 	overflow: hidden;
 }
 .gsc-tab,
-[role="tab"] {
+[role="tab"],
+[aria-pressed] {
 	background: transparent !important;
 	border: none !important;
 	color: rgb(85, 99, 130) !important;
@@ -105,22 +108,22 @@ main {
 }
 .gsc-tab:hover,
 [role="tab"]:hover {
-	background: rgba(255, 255, 255, 0.5) !important;
+	background: rgba(255, 93, 143, 0.08) !important;
 	color: #ff5d8f !important;
 }
 .gsc-tab[aria-selected="true"],
-[role="tab"][aria-selected="true"] {
-	background: rgba(255, 255, 255, 0.85) !important;
+[role="tab"][aria-selected="true"],
+[aria-pressed="true"] {
+	background: rgba(255, 93, 143, 0.15) !important;
 	color: #ff5d8f !important;
 	font-weight: 600;
 }
 
-/* —— 5. 评论卡片：纯描边，几乎透明 ——
-   注意：iframe 里 backdrop-filter 看不到外面博客的玻璃卡，所以不用 blur，
-   靠极低 alpha + 细描边在水色背景上勾出卡片轮廓 */
+/* —— 5. 评论卡片：极淡填充 + 描边
+   再降一档 alpha，让水色卡背景充分显出来 */
 .gsc-comment {
-	background: rgba(255, 255, 255, 0.15) !important;
-	border: 1px solid rgba(255, 255, 255, 0.45) !important;
+	background: rgba(255, 255, 255, 0.08) !important;
+	border: 1px solid rgba(255, 255, 255, 0.4) !important;
 	border-radius: 14px !important;
 	box-shadow: 0 1px 3px rgba(31, 38, 135, 0.04);
 }
@@ -133,14 +136,14 @@ main {
 	border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
-/* —— 6. textarea：用纯白半透明，让用户看清能在哪里输入 —— */
+/* —— 6. textarea：保留比卡片稍高的 alpha，让用户看清输入区域 —— */
 .gsc-comment-box-textarea,
 .gsc-comment-box-write,
 .gsc-comment-box-preview,
 textarea,
 textarea.form-control {
-	background: rgba(255, 255, 255, 0.35) !important;
-	border: 1px solid rgba(255, 255, 255, 0.5) !important;
+	background: rgba(255, 255, 255, 0.22) !important;
+	border: 1px solid rgba(255, 255, 255, 0.45) !important;
 	border-radius: 10px !important;
 	color: #1f2937 !important;
 }
@@ -157,8 +160,8 @@ textarea.form-control:focus {
 
 /* —— 7. 整个评论框外壳（form 容器）：和评论卡一致 —— */
 .gsc-comment-box {
-	background: rgba(255, 255, 255, 0.15) !important;
-	border: 1px solid rgba(255, 255, 255, 0.45) !important;
+	background: rgba(255, 255, 255, 0.08) !important;
+	border: 1px solid rgba(255, 255, 255, 0.4) !important;
 	border-radius: 14px !important;
 }
 
@@ -194,14 +197,16 @@ textarea.form-control:focus {
 	background-color: #ff7eb3 !important;
 }
 
-/* —— 9. 普通按钮（次级按钮、编辑、回复等） —— */
-.btn {
-	background: rgba(255, 255, 255, 0.5) !important;
-	border-color: rgba(255, 255, 255, 0.6) !important;
+/* —— 9. 普通按钮（次级按钮、编辑、回复等）：默认透明只描边 —— */
+.btn:not(.btn-primary) {
+	background: transparent !important;
+	border-color: rgba(255, 255, 255, 0.55) !important;
 	color: #1f2937 !important;
 }
-.btn:hover {
-	background: rgba(255, 255, 255, 0.85) !important;
+.btn:not(.btn-primary):hover {
+	background: rgba(255, 93, 143, 0.08) !important;
+	color: #ff5d8f !important;
+	border-color: rgba(255, 93, 143, 0.35) !important;
 }
 
 /* —— 10. 链接颜色统一站点 accent —— */
