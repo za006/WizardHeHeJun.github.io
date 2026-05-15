@@ -14,6 +14,20 @@
 		<span>文章目录</span>
 	</button>
 	<nav class="toc-list-wrap"><ul class="toc-list" id="toc-list-desktop"></ul></nav>
+	<div class="toc-footer">
+		<button class="toc-action" type="button" data-scroll-top aria-label="返回顶部">
+			<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+				><polyline points="18 15 12 9 6 15"></polyline></svg
+			>
+			<span>回到顶部</span>
+		</button>
+		<button class="toc-action" type="button" data-scroll-bottom aria-label="滚到底部">
+			<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+				><polyline points="6 9 12 15 18 9"></polyline></svg
+			>
+			<span>滚到底部</span>
+		</button>
+	</div>
 </aside>
 
 <div class="toc-mobile" id="toc-mobile" hidden>
@@ -167,6 +181,32 @@
 			{ passive: true },
 		);
 		recompute();
+
+		/* —— TOC 位置：未滚出 hero 时贴在 hero 下方，滚出后吸顶 —— */
+		const hero = document.querySelector('.hero-image');
+		const updateTocTop = () => {
+			if (!hero || !desktop) return;
+			const stickyTop = document.body.classList.contains('header-hidden') ? 20 : 80;
+			const heroRect = hero.getBoundingClientRect();
+			// hero 底部 + 20px 间距，但不小于 stickyTop
+			const top = Math.max(stickyTop, heroRect.bottom + 20);
+			desktop.style.top = top + 'px';
+		};
+		let rafTop = 0;
+		const onScrollTop = () => {
+			if (!rafTop) rafTop = requestAnimationFrame(() => { updateTocTop(); rafTop = 0; });
+		};
+		window.addEventListener('scroll', onScrollTop, { passive: true });
+		window.addEventListener('resize', onScrollTop, { passive: true });
+		updateTocTop();
+
+		/* —— 两个跳转按钮 —— */
+		document.querySelector('[data-scroll-top]')?.addEventListener('click', () => {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		});
+		document.querySelector('[data-scroll-bottom]')?.addEventListener('click', () => {
+			window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+		});
 	};
 
 	if (document.readyState === 'loading') {
@@ -177,29 +217,20 @@
 </script>
 
 <style is:global>
-	/* ━━━━━━━━━━ 桌面端：左侧固定栏（≥1280） ━━━━━━━━━━ */
+	/* ━━━━━━━━━━ 桌面端：左侧贴边固定栏（≥1280） ━━━━━━━━━━ */
 	.toc-desktop {
 		position: fixed;
 		top: 80px;
-		left: max(16px, calc(50vw - 420px - 240px - 20px));
+		left: 16px;
 		width: 240px;
 		max-height: calc(100vh - 100px);
 		display: none;
-		padding: 0.4em 0.6em;
+		padding: 0.4em 0.6em 0.6em;
 		background: transparent;
 		z-index: 5;
 		flex-direction: column;
 		overflow: hidden;
-		transition: top 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-	/* header 被滚动隐藏时，TOC 跟着上移避免大块空白 */
-	body.header-hidden .toc-desktop {
-		top: 20px;
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.toc-desktop {
-			transition: none;
-		}
+		/* top 由 JS 在 scroll 时动态设置，这里只给一个柔和过渡 */
 	}
 	@media (min-width: 1280px) {
 		.toc-desktop:not([hidden]) {
@@ -208,8 +239,14 @@
 	}
 	@media (min-width: 1400px) {
 		.toc-desktop {
-			left: max(20px, calc(50vw - 480px - 260px - 28px));
+			left: 24px;
 			width: 260px;
+		}
+	}
+	@media (min-width: 1600px) {
+		.toc-desktop {
+			left: 32px;
+			width: 280px;
 		}
 	}
 	/* 顶部胶囊：文章目录 */
@@ -231,10 +268,14 @@
 		letter-spacing: 0.04em;
 	}
 	.toc-desktop .toc-list-wrap {
+		flex: 1;
+		min-height: 0;
 		overflow-y: auto;
-		max-height: calc(100vh - 180px);
 		margin-right: -0.4em;
 		padding-right: 0.4em;
+		/* 底部柔和淡出遮罩，避免硬切 */
+		-webkit-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 28px), transparent 100%);
+		mask-image: linear-gradient(180deg, black 0%, black calc(100% - 28px), transparent 100%);
 	}
 	.toc-desktop .toc-list-wrap::-webkit-scrollbar {
 		width: 4px;
@@ -242,6 +283,40 @@
 	.toc-desktop .toc-list-wrap::-webkit-scrollbar-thumb {
 		background: rgba(0, 0, 0, 0.12);
 		border-radius: 2px;
+	}
+
+	/* —— 底部跳转按钮组 —— */
+	.toc-footer {
+		display: flex;
+		gap: 0.45em;
+		margin-top: 0.6em;
+		padding-top: 0.5em;
+		flex-shrink: 0;
+	}
+	.toc-action {
+		flex: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.35em;
+		padding: 0.5em 0.4em;
+		font-family: inherit;
+		font-size: 0.78em;
+		font-weight: 500;
+		color: #c2185b;
+		background: rgba(255, 209, 228, 0.5);
+		border: 1px solid rgba(255, 144, 192, 0.35);
+		border-radius: 10px;
+		cursor: pointer;
+		transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+	}
+	.toc-action:hover {
+		background: rgba(255, 183, 197, 0.85);
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(255, 144, 192, 0.25);
+	}
+	.toc-action svg {
+		flex-shrink: 0;
 	}
 
 	/* ━━━━━━━━━━ 列表项通用样式 ━━━━━━━━━━ */
