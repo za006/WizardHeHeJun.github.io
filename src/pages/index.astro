@@ -330,7 +330,9 @@ const typeLines = [
 				margin: 0;
 				padding: 0;
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				/* min(280px, 100%) 是关键：当父容器 < 280px 时（窄屏），minmax 的最小值
+				   退化为 100%，避免卡片强制 280px 撑出容器；宽屏依旧吃 280px 阈值 */
+				grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
 				gap: 0.8em;
 			}
 			.post-cards a {
@@ -408,7 +410,7 @@ const typeLines = [
 			}
 			.now-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 				gap: 1em;
 			}
 			.now-item {
