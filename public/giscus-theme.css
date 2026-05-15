@@ -87,14 +87,13 @@ main {
 	background-color: transparent !important;
 }
 
-/* —— 4. 「最早 / 最新」排序 tab 组（segmented control） —— */
+/* —— 4. 「最早 / 最新」排序 tab 组（segmented control）
+       注意：iframe 内 backdrop-filter 无效，纯靠 alpha 透出底色 —— */
 .gsc-tab-list,
 [role="tablist"] {
-	background: rgba(255, 255, 255, 0.4) !important;
-	border: 1px solid rgba(255, 255, 255, 0.55) !important;
+	background: rgba(255, 255, 255, 0.25) !important;
+	border: 1px solid rgba(255, 255, 255, 0.45) !important;
 	border-radius: 999px !important;
-	backdrop-filter: blur(8px) saturate(160%);
-	-webkit-backdrop-filter: blur(8px) saturate(160%);
 	overflow: hidden;
 }
 .gsc-tab,
@@ -116,14 +115,14 @@ main {
 	font-weight: 600;
 }
 
-/* —— 5. 评论卡片：浅玻璃 + 柔边 —— */
+/* —— 5. 评论卡片：纯描边，几乎透明 ——
+   注意：iframe 里 backdrop-filter 看不到外面博客的玻璃卡，所以不用 blur，
+   靠极低 alpha + 细描边在水色背景上勾出卡片轮廓 */
 .gsc-comment {
-	background: rgba(255, 255, 255, 0.4) !important;
-	border: 1px solid rgba(255, 255, 255, 0.55) !important;
+	background: rgba(255, 255, 255, 0.15) !important;
+	border: 1px solid rgba(255, 255, 255, 0.45) !important;
 	border-radius: 14px !important;
-	backdrop-filter: blur(10px) saturate(160%);
-	-webkit-backdrop-filter: blur(10px) saturate(160%);
-	box-shadow: 0 2px 8px rgba(31, 38, 135, 0.06);
+	box-shadow: 0 1px 3px rgba(31, 38, 135, 0.04);
 }
 .gsc-comment > .gsc-comment-box {
 	background: transparent !important;
@@ -131,33 +130,36 @@ main {
 	box-shadow: none !important;
 }
 .gsc-comment-header {
-	border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
-/* —— 6. 输入框 / textarea / 编辑器：水色玻璃 —— */
+/* —— 6. textarea：用纯白半透明，让用户看清能在哪里输入 —— */
 .gsc-comment-box-textarea,
 .gsc-comment-box-write,
 .gsc-comment-box-preview,
 textarea,
 textarea.form-control {
-	background: rgba(255, 255, 255, 0.5) !important;
-	border: 1px solid rgba(255, 255, 255, 0.6) !important;
-	backdrop-filter: blur(8px) saturate(160%);
-	-webkit-backdrop-filter: blur(8px) saturate(160%);
+	background: rgba(255, 255, 255, 0.35) !important;
+	border: 1px solid rgba(255, 255, 255, 0.5) !important;
 	border-radius: 10px !important;
 	color: #1f2937 !important;
 }
 textarea::placeholder {
-	color: rgba(85, 99, 130, 0.7) !important;
+	color: rgba(85, 99, 130, 0.65) !important;
+}
+textarea:focus,
+textarea.form-control:focus {
+	background: rgba(255, 255, 255, 0.55) !important;
+	border-color: rgba(255, 93, 143, 0.45) !important;
+	box-shadow: 0 0 0 3px rgba(255, 93, 143, 0.15) !important;
+	outline: none !important;
 }
 
-/* —— 整个评论框外壳（form 容器） —— */
+/* —— 7. 整个评论框外壳（form 容器）：和评论卡一致 —— */
 .gsc-comment-box {
-	background: transparent !important;
-	border: 1px solid rgba(255, 255, 255, 0.55) !important;
+	background: rgba(255, 255, 255, 0.15) !important;
+	border: 1px solid rgba(255, 255, 255, 0.45) !important;
 	border-radius: 14px !important;
-	backdrop-filter: blur(10px) saturate(160%);
-	-webkit-backdrop-filter: blur(10px) saturate(160%);
 }
 
 /* —— 7. 反应（reactions） —— */
