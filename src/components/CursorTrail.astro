@@ -1,5 +1,5 @@
 ---
-// 鼠标轨迹：节流的 mousemove → 空心几何菱形 + 轻旋转 + 淡出
+// 鼠标轨迹：节流的 mousemove → 空心几何（菱形 + 三角形交替）+ 旋转 + 淡出
 // 触屏设备自动跳过；prefers-reduced-motion 时也不创建
 ---
 
@@ -13,26 +13,34 @@
 			return;
 		}
 
-		const colors = ['#ff90c0', '#7ab5ff'];
+		const colors = ['#ff90c0', '#7ab5ff', '#c280ff'];
+		const TRI_SVG =
+			'<svg viewBox="0 0 24 24" width="100%" height="100%"><polygon points="12,3.5 22,20.5 2,20.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+
 		let lastT = 0;
 		let colorIdx = 0;
-		const MAX = 18;
-		const LIFE = 850;
+		let toggle = 0;
+		const MAX = 26; // 同时存在数量
+		const LIFE = 900;
 		const queue = [];
 
 		document.addEventListener(
 			'mousemove',
 			(e) => {
 				const now = performance.now();
-				if (now - lastT < 30) return;
+				if (now - lastT < 22) return; // 节流 ~45fps，更密
 				lastT = now;
 
 				const dot = document.createElement('span');
-				dot.className = 'cursor-trail-dot';
+				// 每 3 个穿插 1 个三角形：◇ ◇ △ ◇ ◇ △ ...
+				const isTri = toggle % 3 === 2;
+				dot.className = isTri ? 'cursor-trail-dot tri' : 'cursor-trail-dot';
+				if (isTri) dot.innerHTML = TRI_SVG;
 				dot.style.left = e.clientX + 'px';
 				dot.style.top = e.clientY + 'px';
 				dot.style.color = colors[colorIdx];
 				colorIdx = (colorIdx + 1) % colors.length;
+				toggle++;
 
 				document.body.appendChild(dot);
 				queue.push(dot);
@@ -63,7 +71,21 @@
 		opacity: 0;
 		z-index: 9999;
 		box-shadow: 0 0 5px currentColor;
-		animation: cursor-trail-fade 850ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+		animation: cursor-trail-fade 900ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+	}
+	/* 三角形：用内联 SVG 描边，box-shadow 改成 SVG drop-shadow */
+	.cursor-trail-dot.tri {
+		width: 20px;
+		height: 20px;
+		border: none;
+		background: transparent;
+		box-shadow: none;
+		transform: translate(-50%, -50%) rotate(0deg);
+		animation-name: cursor-trail-fade-tri;
+	}
+	.cursor-trail-dot.tri svg {
+		display: block;
+		filter: drop-shadow(0 0 3px currentColor);
 	}
 	@keyframes cursor-trail-fade {
 		0% {
@@ -77,6 +99,20 @@
 		100% {
 			opacity: 0;
 			transform: translate(-50%, -50%) rotate(225deg) scale(0.2);
+		}
+	}
+	@keyframes cursor-trail-fade-tri {
+		0% {
+			opacity: 0;
+			transform: translate(-50%, -50%) rotate(0deg) scale(0.5);
+		}
+		20% {
+			opacity: 0.85;
+			transform: translate(-50%, -50%) rotate(40deg) scale(1.1);
+		}
+		100% {
+			opacity: 0;
+			transform: translate(-50%, -50%) rotate(180deg) scale(0.2);
 		}
 	}
 </style>
