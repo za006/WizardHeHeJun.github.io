@@ -180,16 +180,26 @@
 	/* ━━━━━━━━━━ 桌面端：左侧固定栏（≥1280） ━━━━━━━━━━ */
 	.toc-desktop {
 		position: fixed;
-		top: 96px;
+		top: 80px;
 		left: max(16px, calc(50vw - 420px - 240px - 20px));
 		width: 240px;
-		max-height: calc(100vh - 120px);
+		max-height: calc(100vh - 100px);
 		display: none;
-		padding: 1em 0.6em;
+		padding: 0.4em 0.6em;
 		background: transparent;
 		z-index: 5;
 		flex-direction: column;
 		overflow: hidden;
+		transition: top 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	/* header 被滚动隐藏时，TOC 跟着上移避免大块空白 */
+	body.header-hidden .toc-desktop {
+		top: 20px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.toc-desktop {
+			transition: none;
+		}
 	}
 	@media (min-width: 1280px) {
 		.toc-desktop:not([hidden]) {

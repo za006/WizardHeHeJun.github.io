@@ -223,6 +223,7 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			const diff = y - lastY;
 			if (document.body.classList.contains('drawer-open')) {
 				header.classList.remove('is-hidden');
+				document.body.classList.remove('header-hidden');
 				lastY = y;
 				raf = 0;
 				return;
@@ -233,10 +234,13 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			}
 			if (y < TOP_LOCK) {
 				header.classList.remove('is-hidden');
+				document.body.classList.remove('header-hidden');
 			} else if (diff > 0) {
 				header.classList.add('is-hidden');
+				document.body.classList.add('header-hidden');
 			} else {
 				header.classList.remove('is-hidden');
+				document.body.classList.remove('header-hidden');
 			}
 			lastY = y;
 			raf = 0;
