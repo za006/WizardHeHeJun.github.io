@@ -355,8 +355,8 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		display: none;
 		flex-direction: column;
 		justify-content: center;
-		gap: 4px;
-		padding: 0.6em;
+		gap: 5px;
+		padding: 1em 0.85em;
 		margin-right: 0.4em;
 		background: transparent;
 		border: none;
@@ -369,8 +369,8 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	}
 	.hb-bar {
 		display: block;
-		width: 22px;
-		height: 2px;
+		width: 26px;
+		height: 2.5px;
 		background: rgb(var(--gray-dark));
 		border-radius: 2px;
 	}
@@ -420,8 +420,12 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			display: none;
 		}
 		.search-trigger {
-			padding: 0.9em 0.6em;
+			padding: 1.2em 0.7em;
 			font-size: 1em;
+		}
+		.search-trigger svg {
+			width: 22px;
+			height: 22px;
 		}
 	}
 	/* —— 二级 dropdown —— */
