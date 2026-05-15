@@ -57,12 +57,16 @@ const giscusTheme = import.meta.env.DEV
 	.comments-card {
 		width: 100%;
 		padding: 1.8em 2em;
-		/* 调低 alpha + 减弱 blur，让背景图的水色调子在所有滚动位置都能透出来，
-		   不会因为页面位置不同（about 动态背景 vs friends 偏白段）而显得轻重不一 */
-		background: rgba(255, 255, 255, 0.28);
-		backdrop-filter: blur(12px) saturate(160%);
-		-webkit-backdrop-filter: blur(12px) saturate(160%);
-		border: 1px solid rgba(255, 255, 255, 0.4);
+		/* 用固定的「水色 → 浅粉」渐变底打底，再叠 backdrop blur 加质感。
+		   这样不论背后 bg.jpg 滚到什么色段（about 暖 / friends 冷），
+		   叠加后都能稳定在统一的水玻璃调上。 */
+		background:
+			linear-gradient(135deg,
+				rgba(207, 233, 255, 0.35) 0%,
+				rgba(255, 230, 240, 0.30) 100%);
+		backdrop-filter: blur(20px) saturate(110%);
+		-webkit-backdrop-filter: blur(20px) saturate(110%);
+		border: 1px solid rgba(255, 255, 255, 0.45);
 		border-radius: 18px;
 		box-shadow: 0 4px 18px rgba(31, 38, 135, 0.08);
 		box-sizing: border-box;
