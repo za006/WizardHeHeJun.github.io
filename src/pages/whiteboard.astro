@@ -1,0 +1,483 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`画板 · ${SITE_TITLE}`} description="一块只属于此刻的画板" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>画板</h1>
+			<p class="hint">「随手画几笔，反正离开就消失啦——不留痕迹的小自由」</p>
+
+			<section class="board-card">
+				<div class="toolbar">
+					<div class="tool-group">
+						<label class="tool-label">颜色</label>
+						<div class="swatches" data-swatches>
+							<button type="button" class="swatch" data-color="#222839" style="background:#222839" aria-label="黑色"></button>
+							<button type="button" class="swatch" data-color="#ff5d8f" style="background:#ff5d8f" aria-label="粉色"></button>
+							<button type="button" class="swatch" data-color="#5b8def" style="background:#5b8def" aria-label="蓝色"></button>
+							<button type="button" class="swatch" data-color="#3ec46d" style="background:#3ec46d" aria-label="绿色"></button>
+							<button type="button" class="swatch" data-color="#ffb84d" style="background:#ffb84d" aria-label="橙色"></button>
+							<button type="button" class="swatch" data-color="#a37cff" style="background:#a37cff" aria-label="紫色"></button>
+						</div>
+						<input type="color" data-color-input value="#222839" aria-label="自定义颜色" />
+					</div>
+
+					<div class="tool-group">
+						<label class="tool-label" for="board-size">粗细</label>
+						<input id="board-size" type="range" min="1" max="30" value="3" data-size />
+						<span class="size-readout" data-size-readout>3</span>
+					</div>
+
+					<div class="tool-group actions">
+						<button type="button" class="tool-btn" data-eraser aria-pressed="false">🧽 橡皮</button>
+						<button type="button" class="tool-btn danger" data-clear>🗑 清空</button>
+					</div>
+				</div>
+
+				<div class="canvas-wrap">
+					<canvas data-board class="board" aria-label="自由绘画画布"></canvas>
+				</div>
+				<p class="footnote">Tip: 这块画板不会保存——离开或刷新页面就清空了哦～</p>
+			</section>
+		</main>
+		<Footer />
+
+		<!-- ━━━━━━━━━━ 主题化确认 modal ━━━━━━━━━━ -->
+		<div class="modal-backdrop" data-modal-backdrop aria-hidden="true"></div>
+		<div class="modal" data-modal role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+			<h3 id="modal-title" class="modal-title">🗑 清空画板</h3>
+			<p class="modal-msg">确定要清空整个画板吗？这无法撤销哦～</p>
+			<div class="modal-actions">
+				<button type="button" class="modal-btn cancel" data-modal-cancel>取消</button>
+				<button type="button" class="modal-btn confirm" data-modal-confirm>确定清空</button>
+			</div>
+		</div>
+
+		<script is:inline>
+			(() => {
+				const canvas = document.querySelector('[data-board]');
+				if (!canvas) return;
+				const ctx = canvas.getContext('2d');
+				const sizeInput = document.querySelector('[data-size]');
+				const sizeReadout = document.querySelector('[data-size-readout]');
+				const colorInput = document.querySelector('[data-color-input]');
+				const swatches = document.querySelectorAll('[data-swatches] .swatch');
+				const eraserBtn = document.querySelector('[data-eraser]');
+				const clearBtn = document.querySelector('[data-clear]');
+
+				let color = '#222839';
+				let size = 3;
+				let erasing = false;
+				let drawing = false;
+				let lastX = 0;
+				let lastY = 0;
+
+				const setupCanvas = (preserve) => {
+					const dpr = Math.max(1, window.devicePixelRatio || 1);
+					const rect = canvas.getBoundingClientRect();
+					const cssW = Math.max(1, Math.round(rect.width));
+					const cssH = Math.max(1, Math.round(rect.height));
+					let snapshot = null;
+					if (preserve && canvas.width > 0 && canvas.height > 0) {
+						snapshot = document.createElement('canvas');
+						snapshot.width = canvas.width;
+						snapshot.height = canvas.height;
+						snapshot.getContext('2d').drawImage(canvas, 0, 0);
+					}
+					canvas.width = Math.round(cssW * dpr);
+					canvas.height = Math.round(cssH * dpr);
+					ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+					ctx.lineCap = 'round';
+					ctx.lineJoin = 'round';
+					if (snapshot) {
+						ctx.save();
+						ctx.setTransform(1, 0, 0, 1, 0, 0);
+						ctx.drawImage(snapshot, 0, 0, canvas.width, canvas.height);
+						ctx.restore();
+					}
+				};
+				setupCanvas(false);
+
+				const posOf = (e) => {
+					const r = canvas.getBoundingClientRect();
+					return { x: e.clientX - r.left, y: e.clientY - r.top };
+				};
+
+				const applyMode = () => {
+					// 橡皮：destination-out 真正抹掉像素，露出底下的玻璃质感
+					ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+				};
+
+				const start = (e) => {
+					e.preventDefault();
+					drawing = true;
+					const p = posOf(e);
+					lastX = p.x;
+					lastY = p.y;
+					try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+					applyMode();
+					// 单击落点：画一个小圆点，避免单点没痕迹
+					ctx.fillStyle = erasing ? '#000' : color; // destination-out 模式下颜色不影响结果
+					ctx.beginPath();
+					ctx.arc(p.x, p.y, size / 2, 0, Math.PI * 2);
+					ctx.fill();
+				};
+				const move = (e) => {
+					if (!drawing) return;
+					const p = posOf(e);
+					applyMode();
+					ctx.strokeStyle = erasing ? '#000' : color;
+					ctx.lineWidth = size;
+					ctx.beginPath();
+					ctx.moveTo(lastX, lastY);
+					ctx.lineTo(p.x, p.y);
+					ctx.stroke();
+					lastX = p.x;
+					lastY = p.y;
+				};
+				const end = () => { drawing = false; };
+
+				canvas.addEventListener('pointerdown', start);
+				canvas.addEventListener('pointermove', move);
+				canvas.addEventListener('pointerup', end);
+				canvas.addEventListener('pointercancel', end);
+				canvas.addEventListener('pointerleave', end);
+
+				sizeInput.addEventListener('input', () => {
+					size = parseInt(sizeInput.value, 10) || 1;
+					sizeReadout.textContent = String(size);
+				});
+
+				const setColor = (c) => {
+					color = c;
+					if (erasing) {
+						erasing = false;
+						eraserBtn.setAttribute('aria-pressed', 'false');
+						eraserBtn.classList.remove('is-active');
+					}
+					colorInput.value = c;
+					swatches.forEach((s) =>
+						s.classList.toggle('is-active', s.dataset.color.toLowerCase() === c.toLowerCase()),
+					);
+				};
+
+				swatches.forEach((s) => s.addEventListener('click', () => setColor(s.dataset.color)));
+				colorInput.addEventListener('input', () => setColor(colorInput.value));
+				setColor(color);
+
+				eraserBtn.addEventListener('click', () => {
+					erasing = !erasing;
+					eraserBtn.setAttribute('aria-pressed', String(erasing));
+					eraserBtn.classList.toggle('is-active', erasing);
+				});
+
+				// —— 主题化确认 modal ——
+				const modal = document.querySelector('[data-modal]');
+				const modalBackdrop = document.querySelector('[data-modal-backdrop]');
+				const modalCancel = document.querySelector('[data-modal-cancel]');
+				const modalConfirm = document.querySelector('[data-modal-confirm]');
+				let modalResolver = null;
+
+				const openModal = () => new Promise((resolve) => {
+					modalResolver = resolve;
+					modal.classList.add('is-open');
+					modalBackdrop.classList.add('is-open');
+					modal.setAttribute('aria-hidden', 'false');
+					modalBackdrop.setAttribute('aria-hidden', 'true');
+					setTimeout(() => modalConfirm.focus(), 30);
+				});
+				const closeModal = (result) => {
+					modal.classList.remove('is-open');
+					modalBackdrop.classList.remove('is-open');
+					modal.setAttribute('aria-hidden', 'true');
+					if (modalResolver) {
+						modalResolver(result);
+						modalResolver = null;
+					}
+				};
+				modalCancel.addEventListener('click', () => closeModal(false));
+				modalConfirm.addEventListener('click', () => closeModal(true));
+				modalBackdrop.addEventListener('click', () => closeModal(false));
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(false);
+				});
+
+				clearBtn.addEventListener('click', async () => {
+					const ok = await openModal();
+					if (!ok) return;
+					ctx.save();
+					ctx.setTransform(1, 0, 0, 1, 0, 0);
+					ctx.globalCompositeOperation = 'source-over';
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					ctx.restore();
+				});
+
+				// 窗口尺寸变化：保留已画内容并按新尺寸缩放重绘
+				let resizeRaf = 0;
+				window.addEventListener('resize', () => {
+					if (resizeRaf) return;
+					resizeRaf = requestAnimationFrame(() => {
+						resizeRaf = 0;
+						setupCanvas(true);
+					});
+				});
+			})();
+		</script>
+
+		<style>
+			main {
+				width: min(1080px, 100% - 2em);
+			}
+			h1 {
+				margin-bottom: 0.2em;
+			}
+			.hint {
+				color: rgb(var(--gray));
+				margin-bottom: 1.5em;
+			}
+
+			.board-card {
+				padding: 1em 1.2em 1.2em;
+				background: rgba(255, 255, 255, 0.55);
+				backdrop-filter: blur(18px) saturate(180%);
+				-webkit-backdrop-filter: blur(18px) saturate(180%);
+				border: 1px solid rgba(255, 255, 255, 0.45);
+				border-radius: 18px;
+				box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+			}
+
+			.toolbar {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.8em 1.4em;
+				padding: 0.4em 0.2em 0.9em;
+				border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+				margin-bottom: 0.8em;
+			}
+			.tool-group {
+				display: flex;
+				align-items: center;
+				gap: 0.5em;
+			}
+			.tool-group.actions {
+				margin-left: auto;
+			}
+			.tool-label {
+				font-size: 0.85em;
+				color: rgb(var(--gray));
+			}
+			.swatches {
+				display: flex;
+				gap: 0.3em;
+			}
+			.swatch {
+				width: 24px;
+				height: 24px;
+				padding: 0;
+				border: 2px solid rgba(255, 255, 255, 0.8);
+				border-radius: 50%;
+				cursor: pointer;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+				transition: transform 0.15s ease, box-shadow 0.15s ease;
+			}
+			.swatch:hover {
+				transform: scale(1.12);
+			}
+			.swatch.is-active {
+				border-color: var(--accent);
+				box-shadow: 0 0 0 2px rgba(35, 55, 255, 0.25), 0 1px 3px rgba(0, 0, 0, 0.2);
+			}
+			input[type='color'] {
+				width: 28px;
+				height: 28px;
+				padding: 0;
+				border: 1px solid rgba(0, 0, 0, 0.1);
+				border-radius: 6px;
+				background: transparent;
+				cursor: pointer;
+			}
+			input[type='range'] {
+				width: 130px;
+			}
+			.size-readout {
+				min-width: 1.6em;
+				text-align: center;
+				font-size: 0.85em;
+				color: rgb(var(--gray-dark));
+			}
+			.tool-btn {
+				padding: 0.4em 0.9em;
+				background: rgba(255, 255, 255, 0.7);
+				border: 1px solid rgba(0, 0, 0, 0.08);
+				border-radius: 999px;
+				font-family: inherit;
+				font-size: 0.88em;
+				color: rgb(var(--gray-dark));
+				cursor: pointer;
+				transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+			}
+			.tool-btn:hover {
+				background: rgba(35, 55, 255, 0.08);
+				color: var(--accent);
+			}
+			.tool-btn:active {
+				transform: scale(0.97);
+			}
+			.tool-btn.is-active {
+				background: rgba(35, 55, 255, 0.15);
+				border-color: rgba(35, 55, 255, 0.35);
+				color: var(--accent);
+			}
+			.tool-btn.danger:hover {
+				background: rgba(255, 80, 80, 0.12);
+				color: #d32f2f;
+			}
+
+			.canvas-wrap {
+				width: 100%;
+				aspect-ratio: 16 / 10;
+				border-radius: 12px;
+				overflow: hidden;
+				border: 1px solid rgba(255, 255, 255, 0.6);
+				background:
+					linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(207, 233, 255, 0.45) 100%);
+				backdrop-filter: blur(14px) saturate(180%);
+				-webkit-backdrop-filter: blur(14px) saturate(180%);
+				box-shadow:
+					inset 0 1px 2px rgba(255, 255, 255, 0.6),
+					inset 0 -1px 2px rgba(31, 38, 135, 0.04),
+					0 2px 8px rgba(31, 38, 135, 0.06);
+			}
+			.board {
+				display: block;
+				width: 100%;
+				height: 100%;
+				touch-action: none;
+				cursor: crosshair;
+			}
+
+			.footnote {
+				margin: 0.8em 0 0;
+				font-size: 0.78em;
+				color: rgb(var(--gray));
+				text-align: right;
+			}
+
+			@media (max-width: 640px) {
+				.tool-group.actions {
+					margin-left: 0;
+				}
+				input[type='range'] {
+					width: 100px;
+				}
+				.canvas-wrap {
+					aspect-ratio: 4 / 5;
+				}
+			}
+
+			/* ━━━━━━━━━━ 主题化确认 modal ━━━━━━━━━━ */
+			.modal-backdrop {
+				position: fixed;
+				inset: 0;
+				background: rgba(20, 30, 60, 0.35);
+				backdrop-filter: blur(6px) saturate(140%);
+				-webkit-backdrop-filter: blur(6px) saturate(140%);
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.22s ease;
+				z-index: 95;
+			}
+			.modal-backdrop.is-open {
+				opacity: 1;
+				pointer-events: auto;
+			}
+			.modal {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				width: min(360px, calc(100% - 2em));
+				padding: 1.4em 1.6em 1.2em;
+				background: rgba(255, 255, 255, 0.75);
+				backdrop-filter: blur(20px) saturate(180%);
+				-webkit-backdrop-filter: blur(20px) saturate(180%);
+				border: 1px solid rgba(255, 255, 255, 0.6);
+				border-radius: 18px;
+				box-shadow: 0 18px 48px rgba(31, 38, 135, 0.25);
+				transform: translate(-50%, -50%) scale(0.92);
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+				z-index: 96;
+			}
+			.modal.is-open {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translate(-50%, -50%) scale(1);
+			}
+			.modal-title {
+				margin: 0 0 0.5em;
+				font-size: 1.1em;
+				color: rgb(var(--gray-dark));
+			}
+			.modal-msg {
+				margin: 0 0 1.3em;
+				font-size: 0.92em;
+				color: rgb(var(--gray-dark));
+				line-height: 1.6;
+			}
+			.modal-actions {
+				display: flex;
+				justify-content: flex-end;
+				gap: 0.6em;
+			}
+			.modal-btn {
+				padding: 0.5em 1.2em;
+				border-radius: 999px;
+				font-family: inherit;
+				font-size: 0.9em;
+				cursor: pointer;
+				transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+			}
+			.modal-btn:active {
+				transform: scale(0.96);
+			}
+			.modal-btn.cancel {
+				background: rgba(0, 0, 0, 0.05);
+				border: 1px solid rgba(0, 0, 0, 0.08);
+				color: rgb(var(--gray-dark));
+			}
+			.modal-btn.cancel:hover {
+				background: rgba(0, 0, 0, 0.09);
+			}
+			.modal-btn.confirm {
+				background: linear-gradient(135deg, #ff7eb3 0%, #ff5d8f 100%);
+				border: 1px solid rgba(255, 93, 143, 0.4);
+				color: #fff;
+				font-weight: 600;
+				box-shadow: 0 4px 12px rgba(255, 93, 143, 0.35);
+			}
+			.modal-btn.confirm:hover {
+				background: linear-gradient(135deg, #ff8dbe 0%, #ff6e9c 100%);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.modal-backdrop,
+				.modal {
+					transition: opacity 0.1s linear;
+				}
+				.modal.is-open {
+					transform: translate(-50%, -50%) scale(1);
+				}
+			}
+		</style>
+	</body>
+</html>
