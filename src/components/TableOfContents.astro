@@ -526,9 +526,9 @@
 		body.has-toc .toc-mobile {
 			position: fixed !important;
 			top: 7px;
-			/* 几乎贴到 hamburger / search 按钮边缘，最大化 bar 宽度 */
-			left: 30px;
-			right: 30px;
+			/* 横向间距回到一开始那样 */
+			left: 50px;
+			right: 48px;
 			width: auto !important;
 			max-width: none;
 			margin: 0 !important;
@@ -539,11 +539,11 @@
 		body.has-toc.header-hidden .toc-mobile {
 			transform: translateY(-160%);
 		}
-		/* trigger 改成 ticker 同款玻璃胶囊 */
+		/* trigger 改成 ticker 同款玻璃胶囊，加高让胶囊更厚实 */
 		body.has-toc .toc-mobile-trigger {
-			height: 2.4em;
-			padding: 0 0.7em;
-			font-size: 0.85em;
+			height: 3em;
+			padding: 0 0.85em 0 0.7em;
+			font-size: 0.9em;
 			background: rgba(255, 255, 255, 0.5);
 			border: 1px solid rgba(255, 255, 255, 0.55);
 			box-shadow:
