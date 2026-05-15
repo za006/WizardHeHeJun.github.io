@@ -356,7 +356,7 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		flex-direction: column;
 		justify-content: center;
 		gap: 5px;
-		padding: 1em 0.85em;
+		padding: 1.25em 0.95em;
 		margin-right: 0.4em;
 		background: transparent;
 		border: none;
@@ -387,8 +387,11 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			padding: 1em 0.35em;
 		}
 	}
-	/* —— 手机：藏掉社交图标 —— */
+	/* —— 手机：藏掉社交图标 + 给 header 一个最低高度撑出厚实感 —— */
 	@media (max-width: 720px) {
+		header {
+			min-height: 64px;
+		}
 		.social-links {
 			display: none;
 		}
@@ -402,6 +405,7 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		}
 		nav {
 			justify-content: space-between;
+			min-height: 64px;
 		}
 		h2 {
 			text-align: center;
@@ -409,6 +413,13 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		}
 		.internal-links {
 			display: flex;
+		}
+		.search-trigger {
+			padding: 1.25em 0.7em;
+		}
+		.search-trigger svg {
+			width: 22px;
+			height: 22px;
 		}
 	}
 	/* —— 超窄屏：藏站名 —— */
@@ -420,12 +431,8 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			display: none;
 		}
 		.search-trigger {
-			padding: 1.2em 0.7em;
+			padding: 1.25em 0.7em;
 			font-size: 1em;
-		}
-		.search-trigger svg {
-			width: 22px;
-			height: 22px;
 		}
 	}
 	/* —— 二级 dropdown —— */
