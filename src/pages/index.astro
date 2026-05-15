@@ -11,7 +11,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
-const recent = posts.slice(0, 4);
+const recent = posts.slice(0, 6);
 
 // Hero 的打字机短句池——爱莉希雅口吻，刷新会随机一句
 const typeLines = [
