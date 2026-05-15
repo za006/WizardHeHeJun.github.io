@@ -331,13 +331,15 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4em;
-		padding: 1em 0.8em;
+		padding: 0.55em 1em;
+		margin: 0.2em 0.1em;
 		color: var(--black);
-		border-bottom: 4px solid transparent;
 		text-decoration: none;
 		font-size: 1.15em;
 		font-weight: 600;
-		transition: color 0.18s ease, border-bottom-color 0.18s ease, background 0.18s ease;
+		border-radius: 999px;
+		outline: none;
+		transition: color 0.18s ease, background 0.18s ease, transform 0.15s ease;
 	}
 	.nav-icon {
 		width: 20px;
@@ -349,17 +351,18 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	nav a.active .nav-icon {
 		opacity: 1;
 	}
-	nav a:hover {
-		color: var(--accent);
-		border-bottom-color: rgba(35, 55, 255, 0.35);
-		background: rgba(35, 55, 255, 0.04);
+	nav a:hover,
+	nav a:focus-visible {
+		color: #ff5d8f;
+		background: rgba(255, 93, 143, 0.1);
 	}
 	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
+		color: #ff5d8f;
+		background: linear-gradient(135deg, rgba(255, 209, 228, 0.85) 0%, rgba(255, 183, 197, 0.75) 100%);
+		box-shadow: 0 2px 6px rgba(255, 144, 192, 0.2);
 	}
 	nav a.active:hover {
-		border-bottom-color: var(--accent);
+		background: linear-gradient(135deg, rgba(255, 209, 228, 1) 0%, rgba(255, 183, 197, 0.9) 100%);
 	}
 	.social-links {
 		display: flex;
