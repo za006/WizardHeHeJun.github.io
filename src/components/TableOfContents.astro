@@ -182,15 +182,18 @@
 		);
 		recompute();
 
-		/* —— TOC 位置：未滚出 hero 时贴在 hero 下方，滚出后吸顶 —— */
+		/* —— TOC 位置：未滚出 hero 时贴在 hero 下方，滚出后吸顶
+		   用 transform: translateY 走 GPU 合成层，避免每帧 layout 重排 —— */
 		const hero = document.querySelector('.hero-image');
+		let curTop = -1;
 		const updateTocTop = () => {
 			if (!hero || !desktop) return;
 			const stickyTop = document.body.classList.contains('header-hidden') ? 20 : 80;
 			const heroRect = hero.getBoundingClientRect();
-			// hero 底部 + 20px 间距，但不小于 stickyTop
-			const top = Math.max(stickyTop, heroRect.bottom + 20);
-			desktop.style.top = top + 'px';
+			const top = Math.max(stickyTop, Math.round(heroRect.bottom + 20));
+			if (top === curTop) return; // 避免无意义重绘
+			curTop = top;
+			desktop.style.transform = `translateY(${top}px)`;
 		};
 		let rafTop = 0;
 		const onScrollTop = () => {
@@ -220,7 +223,7 @@
 	/* ━━━━━━━━━━ 桌面端：左侧贴边固定栏（≥1280） ━━━━━━━━━━ */
 	.toc-desktop {
 		position: fixed;
-		top: 80px;
+		top: 0;
 		left: 16px;
 		width: 240px;
 		max-height: calc(100vh - 100px);
@@ -230,7 +233,9 @@
 		z-index: 5;
 		flex-direction: column;
 		overflow: hidden;
-		/* top 由 JS 在 scroll 时动态设置，这里只给一个柔和过渡 */
+		/* 位置走 transform（GPU 合成），不走 top（layout 重排）—— scroll 时丝滑 */
+		transform: translateY(80px);
+		will-change: transform;
 	}
 	@media (min-width: 1280px) {
 		.toc-desktop:not([hidden]) {
