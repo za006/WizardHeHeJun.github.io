@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import elysia from '../assets/elysia.png';
 import BaseHead from '../components/BaseHead.astro';
+import Comments from '../components/Comments.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_TITLE } from '../consts';
@@ -194,6 +195,14 @@ const stack = [
 					<a href="/blog/building-this-blog/">完整搭建过程 →</a>
 				</p>
 			</section>
+
+			<!-- ━━━━━━━━━━ 评论 & 表情 ━━━━━━━━━━ -->
+			<Comments
+				mapping="specific"
+				term="page-about"
+				title="💬 来这里找我聊聊吧～"
+				hint="读完了？那就别走得这么悄无声息嘛——留个表情或写两句，「悄悄告诉你哦，我每条都会看的呢」"
+			/>
 		</main>
 		<Footer />
 

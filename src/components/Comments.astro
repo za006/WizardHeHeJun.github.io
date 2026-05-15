@@ -1,0 +1,82 @@
+---
+import { GISCUS } from '../consts';
+
+interface Props {
+	mapping?: 'pathname' | 'specific' | 'title' | 'url';
+	term?: string;
+	title?: string;
+	hint?: string;
+}
+
+const {
+	mapping = 'pathname',
+	term,
+	title = '💬 留下你的想法～',
+	hint = '用 GitHub 账号登录，留个表情或写两句都好——「悄悄告诉你哦，我每条都会看的呢」',
+} = Astro.props;
+
+const dataTerm = mapping === 'specific' ? term : undefined;
+---
+
+<section class="comments-card">
+	<h2 class="comments-title">{title}</h2>
+	<p class="comments-hint">{hint}</p>
+	<div class="giscus-mount">
+		<script
+			is:inline
+			src="https://giscus.app/client.js"
+			data-repo={GISCUS.repo}
+			data-repo-id={GISCUS.repoId}
+			data-category={GISCUS.category}
+			data-category-id={GISCUS.categoryId}
+			data-mapping={mapping}
+			data-term={dataTerm}
+			data-strict="0"
+			data-reactions-enabled="1"
+			data-emit-metadata="0"
+			data-input-position="bottom"
+			data-theme="light"
+			data-lang="zh-CN"
+			data-loading="lazy"
+			crossorigin="anonymous"
+			async></script>
+	</div>
+</section>
+
+<style>
+	.comments-card {
+		width: 100%;
+		padding: 1.8em 2em;
+		background: rgba(255, 255, 255, 0.55);
+		backdrop-filter: blur(18px) saturate(180%);
+		-webkit-backdrop-filter: blur(18px) saturate(180%);
+		border: 1px solid rgba(255, 255, 255, 0.45);
+		border-radius: 18px;
+		box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+		box-sizing: border-box;
+	}
+	.comments-title {
+		margin: 0 0 0.4em;
+		font-size: 1.3em;
+		color: rgb(var(--gray-dark));
+	}
+	.comments-hint {
+		margin: 0 0 1.2em;
+		color: rgb(var(--gray));
+		font-size: 0.9em;
+		line-height: 1.6;
+	}
+	.giscus-mount {
+		min-height: 150px;
+	}
+	.giscus-mount :global(.giscus-frame) {
+		width: 100%;
+		border: none;
+		color-scheme: light;
+	}
+	@media (max-width: 640px) {
+		.comments-card {
+			padding: 1.4em 1.2em;
+		}
+	}
+</style>
