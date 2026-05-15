@@ -1,5 +1,5 @@
 ---
-// 鼠标轨迹：节流的 mousemove → 空心几何菱形 + 弹出 / 旋转 / 发光 / 缩放淡出
+// 鼠标轨迹：节流的 mousemove → 空心几何菱形 + 轻旋转 + 淡出
 // 触屏设备自动跳过；prefers-reduced-motion 时也不创建
 ---
 
@@ -13,29 +13,26 @@
 			return;
 		}
 
-		const colors = ['#ff90c0', '#7ab5ff', '#c280ff'];
+		const colors = ['#ff90c0', '#7ab5ff'];
 		let lastT = 0;
 		let colorIdx = 0;
-		let toggle = 0;
-		const MAX = 28; // 最大同时存在数量
-		const LIFE = 1100; // 单点生命周期（ms）
+		const MAX = 18;
+		const LIFE = 850;
 		const queue = [];
 
 		document.addEventListener(
 			'mousemove',
 			(e) => {
 				const now = performance.now();
-				if (now - lastT < 25) return; // 节流 ~40fps
+				if (now - lastT < 30) return;
 				lastT = now;
 
 				const dot = document.createElement('span');
-				// 大小交替：大菱形 + 小圆点交错，更有节奏感
-				dot.className = toggle % 2 === 0 ? 'cursor-trail-dot' : 'cursor-trail-dot small';
+				dot.className = 'cursor-trail-dot';
 				dot.style.left = e.clientX + 'px';
 				dot.style.top = e.clientY + 'px';
 				dot.style.color = colors[colorIdx];
 				colorIdx = (colorIdx + 1) % colors.length;
-				toggle++;
 
 				document.body.appendChild(dot);
 				queue.push(dot);
@@ -58,56 +55,28 @@
 	.cursor-trail-dot {
 		position: fixed;
 		pointer-events: none;
-		width: 22px;
-		height: 22px;
-		border: 2.2px solid currentColor;
+		width: 18px;
+		height: 18px;
+		border: 1.8px solid currentColor;
 		background: transparent;
-		transform: translate(-50%, -50%) rotate(45deg) scale(0.3);
+		transform: translate(-50%, -50%) rotate(45deg);
 		opacity: 0;
 		z-index: 9999;
-		box-shadow:
-			0 0 8px currentColor,
-			inset 0 0 4px currentColor;
-		animation: cursor-trail-fade 1100ms cubic-bezier(0.34, 1.36, 0.64, 1) forwards;
-	}
-	/* 小圆点：交错出现，制造节奏 */
-	.cursor-trail-dot.small {
-		width: 10px;
-		height: 10px;
-		border-width: 1.8px;
-		border-radius: 50%;
-		animation-name: cursor-trail-fade-dot;
+		box-shadow: 0 0 5px currentColor;
+		animation: cursor-trail-fade 850ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
 	}
 	@keyframes cursor-trail-fade {
 		0% {
 			opacity: 0;
-			transform: translate(-50%, -50%) rotate(0deg) scale(0.3);
-		}
-		15% {
-			opacity: 1;
-			transform: translate(-50%, -50%) rotate(60deg) scale(1.45);
-		}
-		35% {
-			opacity: 0.95;
-			transform: translate(-50%, -50%) rotate(160deg) scale(1.1);
-		}
-		100% {
-			opacity: 0;
-			transform: translate(-50%, -50%) rotate(540deg) scale(0.15);
-		}
-	}
-	@keyframes cursor-trail-fade-dot {
-		0% {
-			opacity: 0;
-			transform: translate(-50%, -50%) rotate(0deg) scale(0.2);
+			transform: translate(-50%, -50%) rotate(45deg) scale(0.5);
 		}
 		20% {
-			opacity: 1;
-			transform: translate(-50%, -50%) rotate(0deg) scale(1.6);
+			opacity: 0.85;
+			transform: translate(-50%, -50%) rotate(75deg) scale(1.05);
 		}
 		100% {
 			opacity: 0;
-			transform: translate(-50%, -50%) rotate(0deg) scale(0.1);
+			transform: translate(-50%, -50%) rotate(225deg) scale(0.2);
 		}
 	}
 </style>
