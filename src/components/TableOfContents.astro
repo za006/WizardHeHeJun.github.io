@@ -526,8 +526,9 @@
 		}
 		body.has-toc .toc-mobile {
 			position: fixed !important;
-			/* 在 68px header 里垂直居中（浮条 ≈45px）：(68-45)/2 ≈ 12px */
-			top: 12px;
+			/* 浮条字号 0.9em + 3em 高 + 1px×2 描边 ≈ 48px；
+			   在 68px header 中居中：(68-48)/2 = 10px */
+			top: 10px;
 			/* 让出 hamburger / 搜索按钮加大后的占位 */
 			left: 72px;
 			right: 64px;
