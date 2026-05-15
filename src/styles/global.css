@@ -25,6 +25,19 @@
 *::after {
 	box-sizing: border-box;
 }
+/* —— 移除 iOS / Android 默认点击时的蓝色方块高亮 ——
+   保留站点自己的 :active / :hover 反馈即可，避免与玻璃/粉色主题冲突 */
+html {
+	-webkit-tap-highlight-color: transparent;
+}
+a,
+button,
+input,
+select,
+textarea,
+[role='button'] {
+	-webkit-tap-highlight-color: transparent;
+}
 html,
 body {
 	min-height: 100vh;
