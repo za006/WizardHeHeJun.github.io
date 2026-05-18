@@ -4,7 +4,43 @@ import Comments from '../components/Comments.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_TITLE } from '../consts';
-import friends from '../data/friends.json';
+import friendsRaw from '../data/friends.json';
+import ogCacheRaw from '../data/og-cache.json';
+
+type Friend = {
+	name: string;
+	url: string;
+	description?: string;
+	avatar?: string;
+};
+type OgEntry = {
+	url: string;
+	image?: string;
+	title?: string;
+	description?: string;
+	favicon?: string;
+	status: 'ok' | 'partial' | 'failed';
+};
+
+const friends = friendsRaw as Friend[];
+const ogCache = ogCacheRaw as Record<string, OgEntry>;
+
+type Thumb =
+	| { kind: 'image'; src: string }
+	| { kind: 'favicon'; src: string }
+	| { kind: 'letter'; src: string };
+
+function pickThumb(f: Friend): Thumb {
+	if (f.avatar) return { kind: 'image', src: f.avatar };
+	const entry = ogCache[f.url];
+	if (entry?.image) return { kind: 'image', src: entry.image };
+	if (entry?.favicon) return { kind: 'favicon', src: entry.favicon };
+	return { kind: 'letter', src: (f.name?.[0] ?? '?').toUpperCase() };
+}
+
+function pickDesc(f: Friend): string {
+	return f.description || ogCache[f.url]?.description || '';
+}
 ---
 
 <!doctype html>
@@ -23,17 +59,34 @@ import friends from '../data/friends.json';
 					<p class="empty">还没有友链。等你把第一个朋友加进来 ✨</p>
 				) : (
 					<ul class="friends-grid">
-						{friends.map((f) => (
-							<li>
-								<a href={f.url} target="_blank" rel="noopener">
-									<img src={f.avatar} alt={f.name} loading="lazy" />
-									<div class="info">
-										<h3>{f.name}</h3>
-										<p>{f.description}</p>
-									</div>
-								</a>
-							</li>
-						))}
+						{friends.map((f) => {
+							const thumb = pickThumb(f);
+							const desc = pickDesc(f);
+							return (
+								<li>
+									<a
+										href={f.url}
+										target="_blank"
+										rel="noopener"
+										class={thumb.kind === 'image' ? 'has-thumb' : 'no-thumb'}
+									>
+										{thumb.kind === 'image' ? (
+											<div class="thumb">
+												<img src={thumb.src} alt={f.name} loading="lazy" />
+											</div>
+										) : thumb.kind === 'favicon' ? (
+											<img class="avatar favicon" src={thumb.src} alt={f.name} loading="lazy" />
+										) : (
+											<div class="avatar letter" aria-hidden="true">{thumb.src}</div>
+										)}
+										<div class="info">
+											<h3>{f.name}</h3>
+											{desc && <p>{desc}</p>}
+										</div>
+									</a>
+								</li>
+							);
+						})}
 					</ul>
 				)
 			}
@@ -81,33 +134,75 @@ import friends from '../data/friends.json';
 				padding: 0;
 				margin: 0;
 				display: grid;
-				/* min(260px, 100%) 防止窄屏父容器 < 260px 时卡片撑出溢出 */
-				grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+				/* min(280px, 100%) 防止窄屏父容器溢出（thumb-top 卡需要稍宽以容纳缩略图） */
+				grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
 				gap: 1em;
 			}
 			.friends-grid a {
-				display: flex;
-				gap: 0.8em;
-				align-items: center;
-				padding: 1em;
 				background: rgba(255, 255, 255, 0.5);
 				border: 1px solid rgba(255, 255, 255, 0.45);
 				border-radius: 12px;
 				text-decoration: none;
 				color: rgb(var(--gray-dark));
 				transition: transform 0.15s ease, background 0.15s ease;
+				overflow: hidden;
 			}
 			.friends-grid a:hover {
 				background: rgba(255, 255, 255, 0.75);
 				transform: translateY(-3px);
 			}
-			.friends-grid img {
+			/* —— 圆头像变体（无 OG 缩略图） —— */
+			.friends-grid a.no-thumb {
+				display: flex;
+				gap: 0.8em;
+				align-items: center;
+				padding: 1em;
+			}
+			.friends-grid .avatar {
 				width: 56px;
 				height: 56px;
 				border-radius: 50%;
 				flex-shrink: 0;
 				object-fit: cover;
 				background: rgba(0, 0, 0, 0.05);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.friends-grid .avatar.favicon {
+				padding: 12px;
+				background: rgba(35, 55, 255, 0.06);
+			}
+			.friends-grid .avatar.letter {
+				background: linear-gradient(135deg, rgba(35, 55, 255, 0.15), rgba(255, 144, 192, 0.18));
+				color: var(--accent);
+				font-size: 1.6em;
+				font-weight: 700;
+			}
+			/* —— Thumb-top 卡（有 OG 缩略图） —— */
+			.friends-grid a.has-thumb {
+				display: flex;
+				flex-direction: column;
+				padding: 0;
+			}
+			.friends-grid .thumb {
+				width: 100%;
+				aspect-ratio: 16 / 9;
+				overflow: hidden;
+				background: rgba(0, 0, 0, 0.04);
+			}
+			.friends-grid .thumb img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+				transition: transform 0.3s ease;
+			}
+			.friends-grid a.has-thumb:hover .thumb img {
+				transform: scale(1.04);
+			}
+			.friends-grid a.has-thumb .info {
+				padding: 0.8em 1em 1em;
 			}
 			.info h3 {
 				margin: 0 0 0.2em;
