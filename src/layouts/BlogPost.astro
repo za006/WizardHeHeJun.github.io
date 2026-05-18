@@ -208,5 +208,26 @@ const {
 			</div>
 		</main>
 		<Footer />
+
+		<script is:inline>
+			(function () {
+				function init() {
+					document.querySelectorAll('.prose .spoiler').forEach((el) => {
+						el.addEventListener('click', () => el.classList.add('revealed'));
+						el.addEventListener('keydown', (e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								el.classList.add('revealed');
+							}
+						});
+					});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', init);
+				} else {
+					init();
+				}
+			})();
+		</script>
 	</body>
 </html>

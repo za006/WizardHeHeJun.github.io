@@ -205,6 +205,132 @@ hr {
 	}
 }
 
+/* ============================================================
+   Shoka 风格 markdown directives
+   ============================================================
+   :::info / :::tip / :::warning / :::danger / :::spoiler / :::fold[标题]
+   渲染规则见 plugins/remark-shoka-directives.mjs
+*/
+.prose .callout {
+	margin: 1.2em 0;
+	padding: 0.9em 1.1em 0.9em 1em;
+	border-left: 4px solid var(--callout-color, var(--accent));
+	border-radius: 8px;
+	background: var(--callout-bg, rgba(35, 55, 255, 0.06));
+	position: relative;
+}
+.prose .callout::before {
+	content: var(--callout-icon, '');
+	display: inline-block;
+	margin-right: 0.4em;
+	font-weight: 700;
+	color: var(--callout-color, var(--accent));
+}
+.prose .callout > :first-child {
+	display: inline;
+}
+.prose .callout > :nth-child(n + 2) {
+	margin-top: 0.6em;
+}
+.prose .callout > :last-child {
+	margin-bottom: 0;
+}
+.prose .callout-info {
+	--callout-color: #3b82f6;
+	--callout-bg: rgba(59, 130, 246, 0.08);
+	--callout-icon: 'ℹ 提示';
+}
+.prose .callout-tip {
+	--callout-color: #10b981;
+	--callout-bg: rgba(16, 185, 129, 0.08);
+	--callout-icon: '✓ 小诀窍';
+}
+.prose .callout-warning {
+	--callout-color: #f59e0b;
+	--callout-bg: rgba(245, 158, 11, 0.1);
+	--callout-icon: '⚠ 注意';
+}
+.prose .callout-danger {
+	--callout-color: #ef4444;
+	--callout-bg: rgba(239, 68, 68, 0.08);
+	--callout-icon: '✗ 危险';
+}
+
+/* —— 折叠块 ::: fold[标题] —— */
+.prose details.fold {
+	margin: 1.2em 0;
+	padding: 0.5em 0.9em;
+	border: 1px solid rgba(35, 55, 255, 0.18);
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.4);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+}
+.prose details.fold > summary {
+	cursor: pointer;
+	list-style: none;
+	font-weight: 600;
+	color: var(--accent);
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	user-select: none;
+	padding: 0.2em 0;
+}
+.prose details.fold > summary::-webkit-details-marker {
+	display: none;
+}
+.prose details.fold > summary::before {
+	content: '▸';
+	display: inline-block;
+	font-size: 0.85em;
+	transition: transform 0.2s ease;
+	color: var(--accent);
+}
+.prose details.fold[open] > summary::before {
+	transform: rotate(90deg);
+}
+.prose details.fold > summary + * {
+	margin-top: 0.6em;
+}
+.prose details.fold[open] > :last-child {
+	margin-bottom: 0.4em;
+}
+
+/* —— 剧透块 :::spoiler —— */
+.prose .spoiler {
+	display: inline-block;
+	padding: 0.1em 0.4em;
+	background: rgb(var(--gray));
+	color: transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	user-select: none;
+	transition:
+		color 0.2s ease,
+		background 0.2s ease;
+	outline: none;
+}
+.prose .spoiler:hover,
+.prose .spoiler:focus-visible,
+.prose .spoiler.revealed {
+	color: inherit;
+	background: rgba(var(--gray), 0.18);
+	user-select: text;
+}
+.prose .spoiler > :first-child {
+	margin-top: 0;
+}
+.prose .spoiler > :last-child {
+	margin-bottom: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	.prose .spoiler,
+	.prose details.fold > summary::before {
+		transition: none;
+	}
+}
+
 .sr-only {
 	border: 0;
 	padding: 0;
