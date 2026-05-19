@@ -239,9 +239,13 @@ const { prevPost = null, nextPost = null } = Astro.props;
 			// 第一个标题已经滚到 viewport 顶部（offset 内）→ 揭示 TOC 胶囊
 			// 没揭示前 .toc-mobile 用 CSS 设为 opacity:0 + pointer-events:none，
 			// 给 icon-only nav 留出独立的视觉空间（避免胶囊默认就占着不动）
+			// 同步 body.toc-revealed 类：≤640 时 header 中部的 h2 站名会让位淡出
+			// （TOC 胶囊 fixed 浮层会与之视觉冲突）
 			if (mobile && items[0]) {
 				const firstRect = items[0].el.getBoundingClientRect();
-				mobile.classList.toggle('is-revealed', firstRect.top - offset <= 0);
+				const revealed = firstRect.top - offset <= 0;
+				mobile.classList.toggle('is-revealed', revealed);
+				document.body.classList.toggle('toc-revealed', revealed);
 			}
 		};
 		window.addEventListener(
