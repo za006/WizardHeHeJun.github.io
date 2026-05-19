@@ -18,5 +18,9 @@ export default defineConfig({
 	integrations: [mdx({ remarkPlugins }), sitemap(), pagefind()],
 	markdown: {
 		remarkPlugins,
+		// shiki 默认 github-dark；玻璃白底上反差太大，改成 light 主题
+		shikiConfig: {
+			theme: 'github-light',
+		},
 	},
 });

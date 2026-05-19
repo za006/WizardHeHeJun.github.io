@@ -48,14 +48,14 @@ CI 部署红了。包里有个 `preinstall: bun run index.js` 脚本，强制要
 
 ```mermaid
 graph LR
-  A[node_modules/@antv/infographic/index.js<br/>498KB] --> B[混淆代码<br/>变量全是 _0x1234]
-  B --> C[crypto APIs<br/>createHash / pbkdf2Sync / randomBytes]
-  B --> D[fetch × 27<br/>http × 5<br/>fs.* 调用]
-  B --> E[preinstall hook<br/>在你看到任何源码前就跑]
-  C --> F{用途？}
+  A["index.js 498KB"] --> B["混淆代码 变量全是 _0x1234"]
+  B --> C["crypto APIs createHash pbkdf2Sync randomBytes"]
+  B --> D["fetch x 27 http x 5 fs 调用"]
+  B --> E["preinstall hook 在你看到任何源码前就跑"]
+  C --> F{用途}
   D --> F
   E --> F
-  F --> G[强烈暗示<br/>phone home / 遥测<br/>/ license check]
+  F --> G["强烈暗示 phone home / license check"]
 ```
 
 498KB 混淆代码，跑在 npm install 的 preinstall 钩子里，做 crypto + 27 个 fetch + 文件系统操作。这不是开源软件该有的样子——这是**敌意依赖**的典型组合。
