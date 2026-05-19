@@ -271,7 +271,10 @@ pre > code {
 	display: block;
 }
 
-/* —— 放大态：占满 viewport 中央，超大圆角，覆盖一切 —— */
+/* —— 放大态：占满 viewport 中央，超大圆角，覆盖一切 ——
+   box-shadow spread 100vmax 模拟全屏暗遮罩 + 大模糊阴影；
+   这样不需要 body::before 单独画一层（避免跟 .prose 的 backdrop-filter
+   创建的 stacking context 打架，导致 fullscreen pre 跳不到最上层）*/
 .prose pre.astro-code.is-fullscreen {
 	position: fixed !important;
 	inset: 5vh 5vw;
@@ -283,18 +286,12 @@ pre > code {
 	overflow: auto;
 	z-index: 1000;
 	border-radius: 14px;
-	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+	box-shadow:
+		0 0 0 100vmax rgba(0, 0, 0, 0.55),
+		0 24px 64px rgba(0, 0, 0, 0.35);
 }
 body.code-fullscreen-open {
 	overflow: hidden;
-}
-body.code-fullscreen-open::before {
-	content: '';
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.45);
-	backdrop-filter: blur(4px);
-	z-index: 999;
 }
 
 @media (max-width: 640px) {
