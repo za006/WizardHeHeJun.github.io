@@ -281,8 +281,10 @@ const { prevPost = null, nextPost = null } = Astro.props;
 			// 用 height 强制 TOC 卡撑满 viewport（短目录 + 长目录都贴底）：
 			// list-wrap flex: 1 1 0 占满中部，内部按内容滚动；上下两端的渐变 mask 让
 			// 「短目录下方的空白」/「长目录边界」都柔和淡出（不是硬切的「mid-air 空白」）
-			// 配 list-wrap 的 mask-image 让视觉更接近 cosZone/astro-koharu 的 TOC
-			desktop.style.height = vh - top - 20 + 'px';
+			// 底部余量根据 header 状态动态：header 隐藏时 8px（贴近 viewport 底），
+			// header 现身时 20px（给玻璃 shadow 留视觉呼吸空间）
+			const bottomGap = document.body.classList.contains('header-hidden') ? 8 : 20;
+			desktop.style.height = vh - top - bottomGap + 'px';
 			desktop.style.maxHeight = '';
 		};
 		let rafTop = 0;
