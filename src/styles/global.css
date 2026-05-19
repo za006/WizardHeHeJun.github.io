@@ -184,6 +184,60 @@ pre {
 pre > code {
 	all: unset;
 }
+
+/* ============================================================
+   shiki 代码块 macOS 窗口风：顶部灰条 + 3 圆点 + lang 标签
+   ============================================================
+   astro shiki 输出 <pre class="astro-code" data-language="xxx">；
+   inline style 自带 background-color，我们用 inset box-shadow 画 36px header 条覆盖在它上方
+*/
+.prose pre.astro-code {
+	position: relative;
+	margin: 1.4em 0;
+	padding: 2.6em 1.4em 1.2em !important;
+	border-radius: 10px;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	box-shadow:
+		inset 0 36px 0 #ecedef,
+		inset 0 36px 0 0.5px rgba(0, 0, 0, 0.06),
+		0 4px 16px rgba(31, 38, 135, 0.08);
+}
+.prose pre.astro-code::before {
+	content: '';
+	position: absolute;
+	top: 12px;
+	left: 14px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #ff5f56;
+	box-shadow:
+		20px 0 #ffbd2e,
+		40px 0 #27c93f;
+}
+.prose pre.astro-code::after {
+	content: attr(data-language);
+	position: absolute;
+	top: 10px;
+	right: 14px;
+	font-size: 0.78em;
+	color: #6c757d;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-family: 'LXGW WenKai Screen', sans-serif;
+}
+.prose pre.astro-code[data-language="plaintext"]::after,
+.prose pre.astro-code[data-language="text"]::after {
+	display: none;
+}
+@media (max-width: 640px) {
+	.prose pre.astro-code {
+		padding: 2.4em 1em 1em !important;
+	}
+	.prose pre.astro-code::after {
+		display: none;
+	}
+}
 blockquote {
 	border-left: 4px solid var(--accent);
 	padding: 0 0 0 20px;
