@@ -657,7 +657,9 @@ const { prevPost = null, nextPost = null } = Astro.props;
 	.toc-mobile {
 		display: none;
 		position: sticky;
-		top: 64px;
+		/* 80px = 实际 header 高度（与桌面 TOC JS 里的 stickyTop=80 对齐）
+		   旧值 64 比 header 矮 16px → 胶囊上半会被 header 盖住 */
+		top: 80px;
 		z-index: 9;
 		width: min(840px, 100% - 2em);
 		margin: 0 auto 0.8em;
