@@ -339,7 +339,12 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		font-weight: 600;
 		border-radius: 999px;
 		outline: none;
+		/* 防中文按字符折行（窄屏会把「首页」拆成 首/页 两行，胶囊变椭圆） */
+		white-space: nowrap;
 		transition: color 0.18s ease, background 0.18s ease, transform 0.15s ease;
+	}
+	h2 a {
+		white-space: nowrap;
 	}
 	.nav-icon {
 		width: 20px;
@@ -428,16 +433,34 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 		border-radius: 2px;
 	}
 
-	/* —— 平板：压缩 nav 间距 —— */
+	/* —— 平板（721-960）：icon-only nav。
+	   保留 dropdown 结构（hover/tap 仍可触发），藏掉文字标签
+	   避免「首页/画板/博客 ▾...」一字一行的塌陷视觉 */
 	@media (max-width: 960px) {
 		header {
 			padding: 0 0.6em;
 		}
+		.internal-links > a > span,
+		.internal-links .dropdown > a > span {
+			display: none;
+		}
 		nav a {
-			padding: 1em 0.35em;
+			padding: 0.55em 0.65em;
+		}
+		.nav-icon {
+			width: 22px;
+			height: 22px;
 		}
 		.search-trigger {
-			padding: 1em 0.35em;
+			padding: 0.55em 0.65em;
+		}
+		.social-links a {
+			width: 40px;
+			height: 40px;
+		}
+		.social-links svg {
+			width: 22px;
+			height: 22px;
 		}
 	}
 	/* —— 手机：藏掉社交图标 + 给 header 一个最低高度撑出厚实感 —— */
