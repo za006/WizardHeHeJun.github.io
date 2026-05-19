@@ -287,10 +287,12 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 	header {
 		margin: 0;
 		padding: 0 1em;
-		background: rgba(255, 255, 255, 0.5);
-		backdrop-filter: blur(14px) saturate(180%);
-		-webkit-backdrop-filter: blur(14px) saturate(180%);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+		/* 0.78 不透明度 + 18px blur：保留玻璃质感，但足够厚以遮住
+		   滚到 header 下方的 H1 标题等大号文字（旧 0.5 + 14px 透字） */
+		background: rgba(255, 255, 255, 0.78);
+		backdrop-filter: blur(18px) saturate(180%);
+		-webkit-backdrop-filter: blur(18px) saturate(180%);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 		box-shadow: 0 2px 12px rgba(31, 38, 135, 0.08);
 		position: sticky;
 		top: 0;
