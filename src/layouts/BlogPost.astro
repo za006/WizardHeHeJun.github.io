@@ -260,6 +260,44 @@ const {
 		</script>
 
 		<script is:inline>
+			// 正文 figure 点击 → lightbox 放大（portal 到 body 避开 .prose 的 stacking trap）
+			(function () {
+				function init() {
+					document.querySelectorAll('.prose figure.prose-figure').forEach((fig) => {
+						if (fig.dataset.lightboxBound) return;
+						fig.dataset.lightboxBound = '1';
+						fig.addEventListener('click', () => openLightbox(fig));
+					});
+				}
+
+				function openLightbox(fig) {
+					const clone = fig.cloneNode(true);
+					clone.classList.remove('prose-figure');
+					clone.classList.add('prose-figure-fullscreen');
+					document.body.appendChild(clone);
+					document.body.classList.add('figure-lightbox-open');
+
+					const close = () => {
+						clone.remove();
+						document.body.classList.remove('figure-lightbox-open');
+						document.removeEventListener('keydown', onKey);
+					};
+					const onKey = (e) => {
+						if (e.key === 'Escape') close();
+					};
+					clone.addEventListener('click', close);
+					document.addEventListener('keydown', onKey);
+				}
+
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', init);
+				} else {
+					init();
+				}
+			})();
+		</script>
+
+		<script is:inline>
 			// 给每个 shiki 代码块顶部右侧注入「放大」「复制」按钮
 			(function () {
 				const FULLSCREEN_SVG =
