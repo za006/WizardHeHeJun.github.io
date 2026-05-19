@@ -18,6 +18,8 @@
 - **[giscus](https://giscus.app/)** —— 基于 GitHub Discussions 的评论 + 表情反应（自定义玻璃主题）
 - **[APlayer](https://aplayer.js.org/) + [MetingJS](https://github.com/metowolf/MetingJS)** —— 音乐播放器
 - **[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai-Screen)** —— 手写感中文字体（jsDelivr CDN）
+- **[remark-directive](https://github.com/remarkjs/remark-directive)** —— Shoka 风 `:::callout / :::spoiler / :::fold` 扩展语法
+- **[mermaid](https://mermaid.js.org/)** —— 客户端 lazy load 渲染流程图 / 时序图 / 思维导图
 
 ## 项目结构
 
@@ -92,6 +94,14 @@ my-blog/
 
 ## 主题特色
 
+- 🖼️ **Hero 图 LQIP** —— 32px base64 占位（含 dominant color）内联到 HTML，弱网下立即可见，全图加载完 0.4s 淡入；prebuild 自动重生
+- ✍️ **Shoka markdown 扩展** —— `:::info / :::tip / :::warning / :::danger / :::spoiler / :::fold[标题]` 6 种 directive，融入玻璃风，spoiler 可点击解锁
+- 📊 **Mermaid 客户端渲染** —— 写 ` ```mermaid ` 代码块即可画 flowchart/sequence/mindmap/quadrant 等；仅含 mermaid 块的页面才 lazy load 主包，零负担
+- 💻 **代码块 macOS 窗口风** —— shiki 上叠加 36px 灰色 header + 红黄绿 3 圆点 + lang 标签 + 右上角「放大」「复制」按钮（fullscreen portal 到 body 避开 stacking trap，复制带 ✓ 反馈）
+- 🖼️ **正文图 figure + 智能放大** —— `![alt](src)` 自动转 `<figure>` + figcaption；点击图打开仿 macOS 预览的 lightbox（右侧工具栏放大/缩小/100%/适应/关闭 + 双击 toggle + 滚轮按光标位置缩放 + 拖拽平移）
+- 📑 **TOC 大改造** —— 玻璃蒙版 + 上下篇切换按钮 + 阅读进度条（`#66ccff`）+ 卡高度跟随 header 状态动态扩展（header 隐藏时撑满 viewport 左侧） + 「未完全展开时隐藏底部按钮」过渡
+- 💧 **友链卡 per-friend accent** —— 每个 friend 可指定 `accent: '#hex'`，卡顶色块 + 名字色 + hover 发光全部从 accent 派生（color-mix 自动算明暗变体）；20° 3D tilt 跟随鼠标 + 头像 translateZ 凸起
+- 🌐 **OG 元数据缓存** —— `npm run refresh-og` 抓友链 URL 的 OG image/title/description/favicon 进 `src/data/og-cache.json`（commit 进 git，CI 不上网）；渲染分 thumb-top 卡 / 圆头像 / 字母 tile 三级 fallback
 - 🌊 **毛玻璃风** —— 半透明白卡片 + `backdrop-filter: blur(18px) saturate(180%)`
 - 🖼️ **滑块式视差背景** —— 独立 `bg-layer` div + JS 同步 scroll 进度，页头看图顶 / 页尾看图底
 - 📐 **响应式四档断点** —— 移动 ≤640 / 平板 641-960 / 桌面 961-1280 / 大屏 >1400（再宽到 1800 解锁博文列表 1680px / 画板 1680px）
@@ -118,26 +128,41 @@ my-blog/
 ## 写新文章
 
 ```powershell
-# 1. 在 src/content/blog/ 新建 .md 文件，最小 frontmatter：
----
-title: '...'
-description: '...'         # 30 字内，会进 meta description + 列表卡摘要
-pubDate: 'May 14 2026'     # 英文日期格式
-category: '项目分享'        # 5 选 1：项目分享 / 技术笔记 / 学习总结 / 生活随笔 / 碎碎念
-tags: ['标签1', '标签2']    # 3-5 个
-featured: true             # 可选，置顶
-heroImage: '../../assets/blog/<slug>.jpg'  # 可选
-updatedDate: 'May 14 2026' # 可选，更新过显示「最后更新于」
----
+# 1. 交互式 scaffold（推荐）
+npm run new      # 输入标题 / slug / 分类 / 标签 / 是否置顶 / 描述
+                 # 生成 src/content/blog/<slug>.md + 注释掉的 heroImage 行
 
-# 2. 本地预览
+# 2. 写正文。可用 Shoka markdown directives：
+#   :::info / :::tip / :::warning / :::danger  四色 callout
+#   :::spoiler                                 剧透块（默认隐藏）
+#   :::fold[标题]                              折叠块（原生 details）
+#   ```mermaid                                 流程图/时序图（客户端渲染）
+#   ![alt](src)                                自动转 figure + caption，点击放大
+
+# 3. 加 hero 图：拖到 src/assets/blog/<slug>.jpg，取消 heroImage 注释。
+#    prebuild 自动重生 LQIP，无需手动跑 gen-lqip。
+
+# 4. 本地预览
 npm run dev      # http://localhost:4321/
 
-# 3. 发布
+# 5. 发布
 git add .
 git commit -m "post: 文章标题"
 git push         # 推送后约 40-50 秒自动部署上线
 ```
+
+> 也可以手动建 .md。最小 frontmatter：
+>
+> ```yaml
+> title: '...'
+> description: '...'         # 30 字内
+> pubDate: 'May 14 2026'     # 英文日期格式
+> category: '项目分享'        # 5 选 1：项目分享 / 技术笔记 / 学习总结 / 生活随笔 / 碎碎念
+> tags: ['标签1', '标签2']
+> featured: true             # 可选，置顶
+> heroImage: '../../assets/blog/<slug>.jpg'  # 可选
+> updatedDate: 'May 14 2026' # 可选，更新过显示「最后更新于」
+> ```
 
 ## 常用命令
 
@@ -145,8 +170,10 @@ git push         # 推送后约 40-50 秒自动部署上线
 | :--- | :--- |
 | `npm install` | 安装依赖（首次或换电脑后用） |
 | `npm run dev` | 本地开发服务器 `localhost:4321` |
-| `npm run build` | 构建生产版本到 `./dist/` |
+| `npm run build` | 构建生产版本到 `./dist/`（prebuild 自动重生 LQIP） |
 | `npm run preview` | 本地预览构建产物 |
+| `npm run new` | **交互式新建博文 CLI**（prompt 标题/slug/分类/标签/置顶/描述） |
+| `npm run refresh-og` | 抓 `friends.json` URL 的 OG meta 到 `og-cache.json`（增量；`--force` 全量重抓） |
 | `node scripts/gen-favicon.mjs` | 重新生成 favicon（换头像后用） |
 | `node scripts/crop-hero.mjs` | 预裁竖版人像图为横版面孔居中 |
 
@@ -190,7 +217,12 @@ git push
 | 全屏背景图 | 替换 `src/assets/bg.jpg` 即可 |
 | favicon | 替换 `src/assets/elysia.png`，跑 `node scripts/gen-favicon.mjs` |
 | 音乐歌单 | `src/components/MusicPlayer.astro` 第 4 行的 `playlistId`（网易云歌单 ID） |
-| 友链 | `src/data/friends.json` |
+| 友链 | `src/data/friends.json`（schema `{name, url, description?, avatar?, accent?}`），改完跑 `npm run refresh-og` |
+| **友链卡 tilt 力度 / 配色 fallback** | `src/pages/friends.astro` 顶部 `pickThumb` / CSS `--tilt-x/y` |
+| **Mermaid 主题配色** | `src/layouts/BlogPost.astro` 末尾 `mermaid.initialize({ themeVariables: ... })` |
+| **代码块 macOS 窗口配色** | `src/styles/global.css` 里 `pre.astro-code` 段（圆点色、header 灰条、lang 标签） |
+| **Shoka callout 配色** | `src/styles/global.css` 里 `.prose .callout-{info,tip,warning,danger}` |
+| **lightbox 工具栏** | `src/layouts/BlogPost.astro` 末尾 figure-lightbox 内联脚本（ICON SVG / scale 范围 0.25-6） |
 | **回忆相册** | `src/data/memories.json` + 图片丢 `public/memories/`（JSON 里引用 `/memories/<文件名>`） |
 | **画板色板/工具** | `src/pages/whiteboard.astro` 顶部的 `.swatches` HTML 块（6 色） |
 | 首页 Now 区内容 | `src/pages/index.astro` 的 `.now-grid` 块 |
@@ -223,6 +255,12 @@ git push
 17. **SVG 必须 inline `width`/`height` 属性**——Astro scoped CSS 加 `!important` 都不一定可靠，HTML 属性最稳
 18. **giscus 自定义主题 URL 必须带 cache buster `?v=`**——iframe 会缓存 theme CSS，改了不刷新；构建时间戳追加到 URL 解决
 19. **移动端必须 `-webkit-tap-highlight-color: transparent`**——iOS/Android 默认点击蓝方块会破坏自定义 active 反馈
+20. **Astro page-scoped CSS 不下钻子组件渲染的元素**（CLAUDE.md §38）——`.card-media img` 在 page 里写，HeroImage 组件渲染的 img 带不同 cid，匹配失败；改用 `:global()` 或者把样式搬进子组件
+21. **`.mdx` 不继承顶层 `markdown.remarkPlugins`**（§39）——必须 `mdx({ remarkPlugins })` 和 `markdown.remarkPlugins` 都注册同一份共享数组
+22. **新装 npm 包必看 install hook**（§40）——`grep -E 'preinstall\|postinstall' node_modules/<pkg>/package.json`；obfuscated 代码 + crypto + fetch + 强制非主流 runtime = 否决（实战否决了 @antv/infographic）
+23. **`backdrop-filter` 在祖先上让后代 `position: fixed` 退化成 absolute**——fullscreen pre / lightbox 必须 portal 到 body 直接子级才能逃出 stacking trap
+24. **CSS `max-height` 跟 JS 设的 `height` 会打架**——viewport 小于某值时 CSS max 赢，JS height 失效（TOC 卡撑不到 viewport 底的根因）；JS 完全接管尺寸时删 CSS fallback
+25. **Shiki 默认 `github-dark` 主题在玻璃白底上反差大**——`astro.config.mjs` 的 `markdown.shikiConfig: { theme: 'github-light' }` 统一全站
 
 ## License
 

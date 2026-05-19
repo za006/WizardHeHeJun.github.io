@@ -648,6 +648,37 @@ export default defineConfig({
 
 如果某天真要用 antv：clone 源码自己 build，绕开 npm 分发版的 install hook。
 
+### 40b. `backdrop-filter` 在祖先上让后代 `position: fixed` 退化（fullscreen / lightbox 必须 portal）
+
+CSS 规范：当一个 fixed 元素的某个**祖先**有 `transform / filter / backdrop-filter / will-change` 等会创建 containing block 的属性时，**该 fixed 元素相对该祖先定位**，而不是 viewport。
+
+`.prose` 用了 `backdrop-filter: blur(18px) saturate(180%)` 实现玻璃风——所以**任何 .prose 内的 `position: fixed` 都会塌**：被 .prose 限制位置 + 被 .prose 的 `overflow: hidden` 裁切（如果有）。
+
+**实战踩过两次**：
+1. **代码块全屏放大**：`pre.astro-code.is-fullscreen { position: fixed; inset: 5vh 5vw; z-index: 1000 }` —— pre 在 .prose 内，fullscreen 失败（用户报告「点放大代码块消失了」）
+2. **正文图 lightbox**：同样问题
+
+**修法（唯一可靠）**：JS portal 把元素临时移到 `document.body` 直接子级 + anchor comment 标记原位：
+
+```js
+// 进入：放 anchor 占位 + 移到 body
+const anchor = document.createComment(' fs-anchor ');
+elem.parentNode.insertBefore(anchor, elem);
+elem._origAnchor = anchor;
+document.body.appendChild(elem);
+elem.classList.add('is-fullscreen');
+
+// 退出：anchor 找回原位
+const anchor = elem._origAnchor;
+anchor.parentNode.insertBefore(elem, anchor);
+anchor.remove();
+elem.classList.remove('is-fullscreen');
+```
+
+**配套**：fullscreen 状态的 CSS 选择器**不要带 `.prose` 前缀**（portal 后元素不在 .prose 内）；如果原始样式 scoped 在 `.prose pre.astro-code`，去掉前缀让它在 body 内也能匹配。
+
+**遮罩**：不要用 `body::before` 单独画遮罩（同样的 stacking trap）。直接用 fullscreen 元素自己的 `box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7)` 模拟全屏暗背景。或者 portal 一个独立 `<div class="backdrop">` 跟 fullscreen 元素并列在 body 子级。
+
 ### 41. ```mermaid 代码块画图（客户端 lazy load）
 
 博文里写 ```` ```mermaid ```` fenced code block 即可——build 时 [plugins/remark-mermaid.mjs](plugins/remark-mermaid.mjs) 把它包成 `<pre class="mermaid">`，[BlogPost.astro](src/layouts/BlogPost.astro) 末尾的 inline script 在**有 mermaid 块的页面**才 dynamic import `mermaid`（~600KB core + 按需 chunk）并 init。
@@ -673,6 +704,57 @@ graph TD
 - mermaid.core: ~607KB（必装）
 - 按使用的 diagram 类型按需载（如 architectureDiagram 149KB / cytoscape 442KB / wardley 612KB）
 - 不用 mermaid 的页面 0KB JS 增量
+
+### 42. 正文图 `![alt](src)` 自动转 `<figure>` + figcaption + lightbox
+
+`plugins/remark-figure.mjs` 检测「段落只含一个 image + alt 非空」→ 改 mdast paragraph 的 `hName: 'figure'` + 加 figcaption 子节点。保留原 image 让 Astro 继续走 Image 优化（webp/lazy load）。
+
+**触发条件**（必须**全部**满足才转）：
+1. 该 paragraph 只有 1 个 child
+2. child.type === 'image'
+3. image.alt 非空（trim 后）
+
+不满足时保留 inline 渲染（不破坏 markdown 内夹小图）。
+
+**lightbox 渲染**（[BlogPost.astro](src/layouts/BlogPost.astro) 末尾 inline script）：仿 macOS 预览——右侧浮动工具栏（放大/缩小/100% label/适应/关闭）+ 双击 toggle 100%↔250% + 滚轮按光标位置缩放 + zoom>1× 时拖拽平移。三件套（backdrop / figure clone / toolbar）独立 portal 到 body，绕开 §40b 的 stacking trap。
+
+### 43. 代码块 macOS 窗口风（纯 CSS + JS portal 放大）
+
+shiki 输出 `<pre class="astro-code" data-language="xxx">`。叠加层视觉：
+- 36px 灰色 header bar（`inset 0 36px 0 #ecedef` box-shadow，覆盖 shiki 的 inline background）
+- 左侧 3 个圆点（单 `::before` + box-shadow 复刻另外两个，14px 间距）
+- header 中间 lang 标签（`::after content: attr(data-language)`，flex 居中；plaintext/text 隐藏）
+- 右侧两个按钮 「放大」「复制」（JS 客户端注入，hover accent 蓝高亮）
+- 放大按钮走 §40b 的 portal 模式：CSS 选择器**不带 `.prose` 前缀**（pre 被 portal 后不在 .prose 内）
+- 复制按钮 `navigator.clipboard.writeText(code.innerText)` + ✓ 反馈 1.4s
+
+shiki theme：必须改成 `github-light`（`astro.config.mjs` 的 `markdown.shikiConfig`），默认 `github-dark` 在玻璃白底反差差。
+
+### 44. TOC 卡尺寸：JS 接管 `height`，CSS 不要留 `max-height` fallback
+
+TOC fixed 侧栏的高度跟 viewport + header 状态联动：
+- `top = max(stickyTop, hero.bottom + 20)`；header 现身 stickyTop=80，隐藏 stickyTop=8
+- `bottomGap = header-hidden ? 8 : 20`
+- JS 设 `desktop.style.height = vh - top - bottomGap`
+
+**踩过的坑**：CSS 里残留 `max-height: calc(100vh - 100px)` 当 SSR fallback。viewport < 1080 时 max-height 比 JS 想要的小，**max-height 会赢**，TOC 卡撑不到 viewport 底（用户反复反馈「底部留白」）。修法：JS 完全接管尺寸时**删掉 CSS 的 max-height**，不留兜底。
+
+**展开过渡视觉**：`top > stickyTop`（hero 还在屏幕里）时给 `.toc-desktop.is-collapsed`，CSS 让底部三件套（上下篇 / footer / 进度条）`opacity:0 + translateY(8px) + pointer-events:none`。hero 完全滚出 → class 移除 → 0.22s 淡入。视觉上「TOC 从 hero 下方向下生长，完全展开才解锁底部按钮」。
+
+### 45. 供应链否决案例：`@antv/infographic`
+
+2026-05-19 尝试集成失败案例归档：
+- 包含 498KB obfuscated `index.js`
+- `preinstall: bun run index.js` lifecycle 强制 bun runtime
+- 内含 `createHash / pbkdf2Sync / randomBytes` + 27 处 `fetch` + 5 处 `http` + 多处 `fs.*`
+- CI runner 没装 bun → install 直接 exit 127 → 部署红
+- 即使加 bun 到 CI，也是在 prod 跑一段看不懂的网络代码
+
+**回滚成本**：4 个 commit 一次性 revert + npm uninstall + 清 plugin / templates / designs / 5 skills / demo post / CLAUDE §40-41 旧文。
+
+**替代**：Mermaid（社区透明 + 无 install hook + 客户端 lazy load）。
+
+教训沉淀进 §40「供应链审查 checklist」，下次装包 mandatory 走一遍。
 
 ## 写新博文
 
@@ -774,6 +856,8 @@ npm run refresh-og --force  # 全量重抓
 | `src/data/lqip.json` | **LQIP 占位图**（base64 + dominant color，每篇 hero 图一条；prebuild 自动重生） |
 | `src/data/memories.json` | 回忆数据（`[{ image, date, title, description? }]`，图片放 `public/memories/`） |
 | `plugins/remark-shoka-directives.mjs` | **Shoka markdown directive transformer**（`:::info/tip/warning/danger/spoiler/fold` → hast HTML） |
+| `plugins/remark-mermaid.mjs` | ```mermaid 块包成 `<pre class="mermaid">`，BlogPost.astro 末尾 inline script lazy load mermaid.js（详见 §41） |
+| `plugins/remark-figure.mjs` | `![alt](src)` 段落转 `<figure>` + figcaption（详见 §42） |
 | `src/utils/reading-time.ts` | 中文友好的字数 + 阅读时长 |
 | `src/content/blog/*.md` | 博文 |
 | `src/assets/bg.jpg` | 全屏背景图（Vite 打包）|
