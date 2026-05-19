@@ -267,15 +267,19 @@ const { prevPost = null, nextPost = null } = Astro.props;
 		/* —— TOC 位置：未滚出 hero 时贴在 hero 下方，滚出后吸顶
 		   用 transform: translateY 走 GPU 合成层，避免每帧 layout 重排 —— */
 		const hero = document.querySelector('.hero-image');
-		let curTop = -1;
+		let curSig = '';
 		const updateTocTop = () => {
 			if (!hero || !desktop) return;
 			const stickyTop = document.body.classList.contains('header-hidden') ? 20 : 80;
 			const heroRect = hero.getBoundingClientRect();
 			const top = Math.max(stickyTop, Math.round(heroRect.bottom + 20));
-			if (top === curTop) return; // 避免无意义重绘
-			curTop = top;
+			const vh = window.innerHeight;
+			const sig = top + '|' + vh; // 检测 top 或 viewport 变化
+			if (sig === curSig) return; // 避免无意义重绘
+			curSig = sig;
 			desktop.style.transform = `translateY(${top}px)`;
+			// max-height 跟随：viewport 减去 top 偏移和 20px 底部余量
+			desktop.style.maxHeight = vh - top - 20 + 'px';
 		};
 		let rafTop = 0;
 		const onScrollTop = () => {
