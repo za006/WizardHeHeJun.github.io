@@ -278,8 +278,10 @@ const { prevPost = null, nextPost = null } = Astro.props;
 			if (sig === curSig) return; // 避免无意义重绘
 			curSig = sig;
 			desktop.style.transform = `translateY(${top}px)`;
-			// max-height 跟随：viewport 减去 top 偏移和 20px 底部余量
-			desktop.style.maxHeight = vh - top - 20 + 'px';
+			// 用 height（不是 max-height）强制 TOC 卡占满到 viewport 底部
+			// —— 这样 prev-next + footer + progress 三件套（margin-top: auto）
+			// 真的被推到网页底部，不只是「内容自然撑到哪算哪」
+			desktop.style.height = vh - top - 20 + 'px';
 		};
 		let rafTop = 0;
 		const onScrollTop = () => {
@@ -347,6 +349,8 @@ const { prevPost = null, nextPost = null } = Astro.props;
 		top: 0;
 		left: 16px;
 		width: 240px;
+		/* height 由 JS 动态设（vh - top - 20）让卡片始终撑到 viewport 底；
+		   下面两个仅作 SSR fallback / JS 还没跑前的初始尺寸 */
 		max-height: calc(100vh - 100px);
 		min-height: min(60vh, 540px);
 		display: none;
