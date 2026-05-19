@@ -8,10 +8,13 @@ import Header from '../components/Header.astro';
 import HeroImage from '../components/HeroImage.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 
+type PostRef = { id: string; title: string } | null;
 type Props = CollectionEntry<'blog'>['data'] & {
 	slug?: string;
 	wordCount?: number;
 	readingTime?: number;
+	prevPost?: PostRef;
+	nextPost?: PostRef;
 };
 
 const {
@@ -25,6 +28,8 @@ const {
 	tags = [],
 	wordCount,
 	readingTime,
+	prevPost = null,
+	nextPost = null,
 } = Astro.props;
 ---
 
@@ -167,7 +172,7 @@ const {
 						<HeroImage slug={slug} src={heroImage} width={1020} height={510} loading="eager" />
 					)}
 				</div>
-				<TableOfContents />
+				<TableOfContents prevPost={prevPost} nextPost={nextPost} />
 				<div class="prose" data-pagefind-body>
 					<div class="title">
 						<div class="date">

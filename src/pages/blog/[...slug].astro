@@ -4,19 +4,37 @@ import BlogPost from '../../layouts/BlogPost.astro';
 import { calcReadingStats } from '../../utils/reading-time';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
-	return posts.map((post) => ({
+	const posts = (await getCollection('blog')).sort(
+		(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+	);
+	return posts.map((post, i) => ({
 		params: { slug: post.id },
-		props: post,
+		props: {
+			post,
+			// posts 按时间倒序：posts[i+1] 是更早的（"上一篇"），posts[i-1] 是更晚的（"下一篇"）
+			prevPost: posts[i + 1] ?? null,
+			nextPost: posts[i - 1] ?? null,
+		},
 	}));
 }
-type Props = CollectionEntry<'blog'>;
+type Props = {
+	post: CollectionEntry<'blog'>;
+	prevPost: CollectionEntry<'blog'> | null;
+	nextPost: CollectionEntry<'blog'> | null;
+};
 
-const post = Astro.props;
+const { post, prevPost, nextPost } = Astro.props;
 const { Content } = await render(post);
 const { wordCount, readingTime } = calcReadingStats(post.body ?? '');
 ---
 
-<BlogPost {...post.data} slug={post.id} wordCount={wordCount} readingTime={readingTime}>
+<BlogPost
+	{...post.data}
+	slug={post.id}
+	wordCount={wordCount}
+	readingTime={readingTime}
+	prevPost={prevPost ? { id: prevPost.id, title: prevPost.data.title } : null}
+	nextPost={nextPost ? { id: nextPost.id, title: nextPost.data.title } : null}
+>
 	<Content />
 </BlogPost>

@@ -4,6 +4,15 @@
 // - 窄屏: 在 .prose 顶部显示一个胶囊触发器，点击展开下拉
 // - 客户端从 .prose 的 h2/h3 标题构建；用 IntersectionObserver 做 scroll-spy
 // 文章无 h2/h3 时整个组件不显示。
+// - 接受 prevPost / nextPost props 渲染上下篇切换
+// - 底部进度条客户端 JS 监听 scroll 显示阅读进度
+
+type PostRef = { id: string; title: string } | null;
+interface Props {
+	prevPost?: PostRef;
+	nextPost?: PostRef;
+}
+const { prevPost = null, nextPost = null } = Astro.props;
 ---
 
 <aside class="toc-desktop" id="toc-desktop" aria-label="文章目录" hidden>
@@ -14,6 +23,32 @@
 		<span>文章目录</span>
 	</button>
 	<nav class="toc-list-wrap"><ul class="toc-list" id="toc-list-desktop"></ul></nav>
+	{(prevPost || nextPost) && (
+		<div class="toc-prev-next">
+			{prevPost ? (
+				<a class="toc-pn toc-pn-prev" href={`/blog/${prevPost.id}/`} title={prevPost.title}>
+					<span class="pn-arrow">‹</span>
+					<span class="pn-label">
+						<span class="pn-hint">上一篇</span>
+						<span class="pn-title">{prevPost.title}</span>
+					</span>
+				</a>
+			) : (
+				<span class="toc-pn toc-pn-disabled" aria-hidden="true"></span>
+			)}
+			{nextPost ? (
+				<a class="toc-pn toc-pn-next" href={`/blog/${nextPost.id}/`} title={nextPost.title}>
+					<span class="pn-label">
+						<span class="pn-hint">下一篇</span>
+						<span class="pn-title">{nextPost.title}</span>
+					</span>
+					<span class="pn-arrow">›</span>
+				</a>
+			) : (
+				<span class="toc-pn toc-pn-disabled" aria-hidden="true"></span>
+			)}
+		</div>
+	)}
 	<div class="toc-footer">
 		<button class="toc-action" type="button" data-scroll-top aria-label="返回顶部">
 			<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
@@ -27,6 +62,9 @@
 			>
 			<span>滚到底部</span>
 		</button>
+	</div>
+	<div class="toc-progress-bar" aria-hidden="true">
+		<div class="toc-progress-bar-fill" id="toc-progress-bar-fill"></div>
 	</div>
 </aside>
 
@@ -266,6 +304,29 @@
 
 		/* —— 标记 body：在 ≤640 视口下，CSS 会把 TOC bar 浮到 header 替代 ticker —— */
 		document.body.classList.add('has-toc');
+
+		/* —— 阅读进度条：监听 scroll，把 0-100% 写到 .toc-progress-bar-fill width —— */
+		const progressFill = document.getElementById('toc-progress-bar-fill');
+		if (progressFill) {
+			let progressRaf = 0;
+			const updateProgress = () => {
+				const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+				const pct = Math.min(100, Math.max(0, (window.scrollY / max) * 100));
+				progressFill.style.width = pct.toFixed(2) + '%';
+			};
+			window.addEventListener(
+				'scroll',
+				() => {
+					if (progressRaf) return;
+					progressRaf = requestAnimationFrame(() => {
+						updateProgress();
+						progressRaf = 0;
+					});
+				},
+				{ passive: true },
+			);
+			updateProgress();
+		}
 	};
 
 	if (document.readyState === 'loading') {
@@ -285,8 +346,13 @@
 		max-height: calc(100vh - 100px);
 		min-height: min(60vh, 540px);
 		display: none;
-		padding: 0.4em 0.6em 0.6em;
-		background: transparent;
+		padding: 0.9em 0.8em 0.8em;
+		background: rgba(255, 255, 255, 0.55);
+		backdrop-filter: blur(18px) saturate(180%);
+		-webkit-backdrop-filter: blur(18px) saturate(180%);
+		border: 1px solid rgba(255, 255, 255, 0.45);
+		border-radius: 18px;
+		box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
 		z-index: 5;
 		flex-direction: column;
 		overflow: hidden;
@@ -347,15 +413,108 @@
 		border-radius: 2px;
 	}
 
+	/* —— 上下篇切换 ——
+	   margin-top: auto 把这块推到 .toc-desktop 底部上方（在 footer 之上、目录列表之下） */
+	.toc-prev-next {
+		display: flex;
+		gap: 0.4em;
+		margin-top: auto;
+		padding-top: 0.6em;
+		flex-shrink: 0;
+	}
+	.toc-pn {
+		flex: 1 1 0;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.45em 0.6em;
+		font-size: 0.74em;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+		background: rgba(255, 255, 255, 0.45);
+		border: 1px solid rgba(255, 255, 255, 0.55);
+		border-radius: 10px;
+		transition:
+			background 0.2s ease,
+			transform 0.15s ease,
+			box-shadow 0.2s ease;
+		overflow: hidden;
+	}
+	.toc-pn:hover {
+		background: rgba(255, 144, 192, 0.18);
+		color: #c2185b;
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(255, 144, 192, 0.2);
+	}
+	.toc-pn-disabled {
+		opacity: 0;
+		pointer-events: none;
+	}
+	.toc-pn .pn-arrow {
+		font-size: 1.4em;
+		line-height: 1;
+		color: rgba(var(--accent-dark, 0, 13, 138), 0.5);
+		flex-shrink: 0;
+	}
+	.toc-pn:hover .pn-arrow {
+		color: #c2185b;
+	}
+	.toc-pn .pn-label {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.1em;
+		overflow: hidden;
+	}
+	.toc-pn-next .pn-label {
+		text-align: right;
+	}
+	.toc-pn .pn-hint {
+		font-size: 0.78em;
+		color: rgb(var(--gray));
+		letter-spacing: 0.05em;
+	}
+	.toc-pn .pn-title {
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	/* —— 底部跳转按钮组 ——
-	   margin-top: auto 把 footer 推到 .toc-desktop 底部（无论目录项多寡）；
-	   配合 .toc-desktop 的 min-height，短目录时下方留空、按钮贴底 */
+	   margin-top 已被上下篇区接管；这里靠 .toc-prev-next 自身的 margin-top: auto 一起到底 */
 	.toc-footer {
 		display: flex;
 		gap: 0.45em;
-		margin-top: auto;
-		padding-top: 0.5em;
+		margin-top: 0.5em;
+		padding-top: 0.4em;
 		flex-shrink: 0;
+	}
+
+	/* —— 阅读进度条 ——
+	   贴 .toc-desktop 最底；客户端 JS 监听 scroll 设 width */
+	.toc-progress-bar {
+		height: 3px;
+		margin-top: 0.6em;
+		background: rgba(0, 0, 0, 0.06);
+		border-radius: 999px;
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+	.toc-progress-bar-fill {
+		height: 100%;
+		width: 0%;
+		background: #66ccff;
+		border-radius: 999px;
+		transition: width 0.15s ease-out;
+		will-change: width;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.toc-progress-bar-fill {
+			transition: none;
+		}
 	}
 	.toc-action {
 		flex: 1;
