@@ -661,10 +661,19 @@ const { prevPost = null, nextPost = null } = Astro.props;
 		z-index: 9;
 		width: min(840px, 100% - 2em);
 		margin: 0 auto 0.8em;
+		/* 让 top 联动 body.header-hidden 切换（641-1279 视口收到 8px） */
+		transition: top 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	@media (max-width: 1279px) {
 		.toc-mobile:not([hidden]) {
 			display: block;
+		}
+	}
+	/* 中等视口：header 隐藏时，TOC 胶囊滑进 header 留出的空位
+	   （≤640 由后面 fixed + translateY 单独处理，所以这里限定下界 641） */
+	@media (min-width: 641px) and (max-width: 1279px) {
+		body.has-toc.header-hidden .toc-mobile {
+			top: 8px;
 		}
 	}
 	@media (min-width: 1400px) {
