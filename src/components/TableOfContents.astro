@@ -278,12 +278,12 @@ const { prevPost = null, nextPost = null } = Astro.props;
 			if (sig === curSig) return; // 避免无意义重绘
 			curSig = sig;
 			desktop.style.transform = `translateY(${top}px)`;
-			// 用 max-height（不是 height）让 TOC 卡按内容自然撑、上限是 viewport 余量：
-			// - 短目录：TOC 卡小，bottom 紧接 list 末尾（视觉上 TOC 卡矮）
-			// - 长目录：TOC 卡撑到 max-height，list 内部滚动，bottom 紧接 list-wrap 末尾（=卡底=viewport 底）
-			// - header 隐藏：max-height 跟着增大，长目录 TOC 卡撑得更高
-			desktop.style.maxHeight = vh - top - 20 + 'px';
-			desktop.style.height = '';
+			// 用 height 强制 TOC 卡撑满 viewport（短目录 + 长目录都贴底）：
+			// list-wrap flex: 1 1 0 占满中部，内部按内容滚动；上下两端的渐变 mask 让
+			// 「短目录下方的空白」/「长目录边界」都柔和淡出（不是硬切的「mid-air 空白」）
+			// 配 list-wrap 的 mask-image 让视觉更接近 cosZone/astro-koharu 的 TOC
+			desktop.style.height = vh - top - 20 + 'px';
+			desktop.style.maxHeight = '';
 		};
 		let rafTop = 0;
 		const onScrollTop = () => {
@@ -404,18 +404,19 @@ const { prevPost = null, nextPost = null } = Astro.props;
 		letter-spacing: 0.04em;
 	}
 	.toc-desktop .toc-list-wrap {
-		/* flex: 0 1 auto 按 ul 内容自然撑（不主动 grow 占空间）：
-		   - 短目录：list-wrap 矮，bottom block 紧接（TOC 卡整体小）
-		   - 长目录：list-wrap 受 desktop max-height 间接限制，内容超出时自动滚动
-		     bottom block 紧接 list-wrap 末尾（视觉上贴 TOC 卡底） */
-		flex: 0 1 auto;
+		/* flex: 1 1 0 占满 .toc-desktop 中部空间（TOC 卡撑到 viewport 底，bottom 也贴底）；
+		   - 长目录：list 内部滚动
+		   - 短目录：ul 顶部对齐，下方是 list-wrap 内部空白 → 被 mask 渐变淡出 →
+		     视觉上像 cosZone/astro-koharu 那样 list 在中部、bottom 在底，无硬切空白感 */
+		flex: 1 1 0;
 		min-height: 0;
 		overflow-y: auto;
 		margin-right: -0.4em;
 		padding-right: 0.4em;
-		/* 底部柔和淡出遮罩，避免硬切（仅滚动时可见） */
-		-webkit-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 28px), transparent 100%);
-		mask-image: linear-gradient(180deg, black 0%, black calc(100% - 28px), transparent 100%);
+		/* 底部 64px 长渐变 mask 让短目录的空白淡出更柔；
+		   顶部也加 8px 小渐变避免滚动时第一项被硬切 */
+		-webkit-mask-image: linear-gradient(180deg, transparent 0%, black 8px, black calc(100% - 64px), transparent 100%);
+		mask-image: linear-gradient(180deg, transparent 0%, black 8px, black calc(100% - 64px), transparent 100%);
 	}
 	.toc-desktop .toc-list-wrap::-webkit-scrollbar {
 		width: 4px;
