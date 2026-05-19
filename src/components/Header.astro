@@ -465,6 +465,13 @@ const tickerItems = recent.length > 0 ? [...recent, recent[0]] : [];
 			height: 22px;
 		}
 	}
+	/* 仅在 721-960 这段 icon-only 范围藏站名 —— 让出 ~160px 给 nav + 社交图标。
+	   ≤720 由汉堡接管，那时 h2 重新出现并居中（既有规则） */
+	@media (min-width: 721px) and (max-width: 960px) {
+		h2 {
+			display: none;
+		}
+	}
 	/* —— 手机：藏掉社交图标 + 给 header 一个最低高度撑出厚实感 —— */
 	@media (max-width: 720px) {
 		header {
