@@ -274,6 +274,10 @@ const { prevPost = null, nextPost = null } = Astro.props;
 			const stickyTop = document.body.classList.contains('header-hidden') ? 8 : 80;
 			const heroRect = hero.getBoundingClientRect();
 			const top = Math.max(stickyTop, Math.round(heroRect.bottom + 20));
+			// 「完全展开」= hero 已滚出（top 已贴到 stickyTop）。否则 TOC 还跟在 hero 下方
+			// 此状态下底部按钮组隐藏 —— 视觉上 TOC 像「从 hero 下方向下生长，直到完全展开
+			// 才解锁底部按钮」，而不是一开始就上下两端各占一段
+			desktop.classList.toggle('is-collapsed', top > stickyTop);
 			const vh = window.innerHeight;
 			const sig = top + '|' + vh; // 检测 top 或 viewport 变化
 			if (sig === curSig) return; // 避免无意义重绘
@@ -427,6 +431,24 @@ const { prevPost = null, nextPost = null } = Astro.props;
 	.toc-desktop .toc-list-wrap::-webkit-scrollbar-thumb {
 		background: rgba(0, 0, 0, 0.12);
 		border-radius: 2px;
+	}
+
+	/* —— TOC 「未完全展开」时（hero 还在屏幕里）：底部三件套（上下篇 / footer / 进度条）淡出
+	   等 hero 滚出 / header 隐藏后 TOC 撑满 viewport 左侧才显示，
+	   视觉上像「目录从 hero 下方向下生长，到完全展开才解锁底部按钮」 */
+	.toc-desktop.is-collapsed .toc-prev-next,
+	.toc-desktop.is-collapsed .toc-footer,
+	.toc-desktop.is-collapsed .toc-progress-bar {
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(8px);
+	}
+	.toc-prev-next,
+	.toc-footer,
+	.toc-progress-bar {
+		transition:
+			opacity 0.22s ease,
+			transform 0.22s ease;
 	}
 
 	/* —— 上下篇切换 ——
