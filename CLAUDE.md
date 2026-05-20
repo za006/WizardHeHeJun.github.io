@@ -1,69 +1,127 @@
 # CLAUDE.md — WizardHeHeJun's Notes
 
-> 这是用户的个人博客（中文，二次元玻璃风）。技术栈：Astro 6 + GitHub Pages + GitHub Actions。
+> 个人博客（中文，二次元玻璃风）。Astro 6 + GitHub Pages + GitHub Actions。
 > 线上：https://wizardhehejun.github.io/
 
-## 用户偏好（重要！别再踩这些坑）
+本文是项目编码规范。新功能、新组件、新博文都从这里出发；遇冲突以本文为准。
 
-- **审美**：二次元/anime 风，米哈游系（崩坏3、原神）水彩透亮系。**拒绝写实摄影、拒绝过度严肃的设计**
-- **要求人物图必须露脸**——曾因「侧脸/背影/SAMPLE 水印图」被批评多次
-- **「休闲」优先**——避免商务/严肃/工作场景
-- 中文为主，写东西用「项目分享 + 技术笔记 + 一些不想被时间冲走的碎碎念」的语气
-- 写代码注释/PR title 用英文，写正文/UI/解释用中文
+## Project Overview
 
-## 关键技术约定
+静态个人博客，承载「项目分享 / 技术笔记 / 学习总结 / 生活随笔 / 碎碎念」五类内容。整站零后端，pagefind 静态全文检索 + giscus 评论。设计语言是「二次元米哈游系 + 毛玻璃」。
 
-### 1. Hero 图裁剪（重灾区）
+## 核心工程原则
 
-`<Image width=X height=Y>` 会让 sharp 强制裁剪到指定比例。坑总结：
+### 1. 结果先验证再交付
+任何 UI 改动必须本地 `npm run build` 通过后再 push；视觉差异提醒用户 `Ctrl+Shift+R` 强刷。
 
-| 策略 | 何时用 |
-|------|--------|
-| **默认 center** | 推荐——前提是源图本身已经是横版且脸在中间 |
-| `position="top"` | 别用——竖图的「顶部」往往是头发/帽子，会切脸 |
-| `position="attention"` | 别用——会被白蝴蝶结 / 头饰 / 高饱和装饰物吸引，跳过脸 |
+### 2. 平台原生优先
+能用 HTML/CSS 解决就别上 JS，能用 SVG 就别用 emoji，能用 GitHub Actions 默认能力就别引第三方。
 
-**正确做法**：竖版人像源图先用 `scripts/crop-hero.mjs` 预裁成横版（脸居中），再让 Astro 默认 center 处理。
+### 3. 无依赖增长（Supply-chain 警觉）
+装任何新 npm 包前必须过 §「供应链审查」清单——拒绝 obfuscated 代码、拒绝可疑 install hook、拒绝强制非主流 runtime。
 
-预裁脚本写法（注意：sharp 不能边读边写同一文件，必须先读到 buffer）：
-```js
-const input = readFileSync(file);
-const buffer = await sharp(input).extract({ left: 0, top, width, height: newHeight }).toBuffer();
-writeFileSync(file, buffer);
+### 4. 三次出现才抽象
+两处相似 = 巧合，三处 = 提取共享。`@keyframes` / 工具函数 / 组件均按此节奏。
+
+### 5. 可降级
+触屏跳过 hover 动画、`prefers-reduced-motion: reduce` 跳过所有动效、慢网下 LQIP 立即可见、JS 失败时 markdown 内容仍可读。
+
+### 6. 单一职责 + 跨组件用 body class 协调
+组件做一件事；多组件联动用 `body.has-toc / body.header-hidden / body.drawer-open` 这类全局 class，**不要** prop drilling 也不要全局事件总线。
+
+## IMPORTANT Guidelines
+
+- **build 验证**：UI 改动必跑 `npm run build`，再 commit + push
+- **强刷提醒**：视觉变化通知用户 Ctrl+Shift+R（默认刷新对图片/字体不奏效）
+- **不加 emoji 到代码或文档**；UI 上要可爱才能加（且要可降级）
+- **不加 `Co-Authored-By: Claude`** 到 commit message，除非明确要求
+- **改完 CLAUDE.md 同步 README.md**——两份保持一致
+- **`backups/`、`cms/node_modules/` 已 .gitignore**，别 commit
+
+## 开发命令
+
+```powershell
+# 写作
+npm run cli              # 一站式 CLI 菜单：新建/备份/还原/列表/清理
+npm run new              # 仅新建一篇博文（CLI 菜单的「新建」也走它）
+npm run cms              # 本地浏览器 CMS（端口 4322，仅 localhost 可访问）
+
+# 开发
+npm run dev              # http://localhost:4321/
+npm run build            # 生产构建到 dist/（prebuild 自动重生 lqip.json）
+npm run preview          # 本地预览构建产物
+
+# 资源
+npm run refresh-og              # 抓 friends.json 的 OG meta（--force 全量重抓）
+node scripts/gen-favicon.mjs    # 重新生成 favicon
+node scripts/crop-hero.mjs      # 预裁竖图为脸居中横版
+
+# 部署
+git push                                                       # 推送即触发 GitHub Actions（~40-50s）
+gh run list --workflow "Deploy to GitHub Pages" --limit 1      # 查最新部署状态
 ```
 
-### 2. 找二次元图片的可靠路径
+## 技术栈
 
-| 站点 | 状态 |
+- **Astro 6**（要求 Node ≥ 22）
+- **Markdown / MDX** 双源，共享同一份 `remarkPlugins`
+- **Pagefind** 静态全文搜索
+- **giscus** 评论（GitHub Discussions + 自定义玻璃主题）
+- **Mermaid** 客户端 lazy load 图表
+- **APlayer + MetingJS** 网易云歌单
+- **LXGW WenKai Screen** 中文字体（jsDelivr CDN）
+- **sharp** 图片处理（hero 裁剪 + LQIP）
+
+## 目录结构
+
+```text
+my-blog/
+├── public/                    # 静态资源（直接拷到根路径）
+│   ├── favicon-*.png          # 多尺寸 favicon
+│   ├── giscus-theme.css       # 评论自定义主题（生产用）
+│   └── memories/              # 回忆相册图片
+├── src/
+│   ├── assets/                # Vite 打包资源（自动 hash）
+│   │   ├── bg.jpg             # 全屏背景图
+│   │   ├── elysia.png         # favicon 源图
+│   │   └── blog/              # 博文 hero 图（按 slug 命名）
+│   ├── components/            # 可复用组件
+│   ├── content/blog/          # 博文（.md / .mdx）
+│   ├── content.config.ts      # 博文 schema
+│   ├── layouts/BlogPost.astro # 文章布局
+│   ├── pages/                 # 路由
+│   ├── data/                  # 数据 JSON（friends / memories / og-cache / lqip）
+│   ├── styles/global.css      # 全局样式 + CSS 变量
+│   ├── utils/                 # 工具函数
+│   └── consts.ts              # 站点常量
+├── plugins/                   # remark 插件
+├── scripts/                   # 构建/工具脚本
+│   └── lib/backup.mjs         # 备份/还原核心
+├── cms/                       # 本地浏览器 CMS 子项目
+├── backups/                   # 本地备份目录（.gitignore）
+└── astro.config.mjs
+```
+
+## 编码规范
+
+### CSS 总则
+
+| 规则 | 写法 |
 |------|------|
-| Unsplash | 通——但都是真实摄影，**用户不喜欢** |
-| Wallhaven, Pixabay | WebFetch 被 403，别试 |
-| Pexels | 通但 anime 内容少 |
-| **Safebooru** ✓ | 推荐。JSON API：`https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=...&json=1`，构造图 URL：`https://safebooru.org/images/{directory}/{image}` |
+| **响应式四档断点** | `≤640 移动` / `641-960 平板` / `961-1280 桌面（默认）` / `>1280, ≥1400, ≥1800 大屏` |
+| **宽度** | `width: min(Npx, 100% - 2em)`——不要 `width + max-width` 双写 |
+| **盒模型** | 全局 `*, *::before, *::after { box-sizing: border-box }` |
+| **字号** | 主体 `clamp(16px, 0.6vw + 14px, 20px)`；hero/标题 `clamp(1.8em, 4vw + 1em, 2.8em)` |
+| **Grid auto-fit** | 永远用 `minmax(min(Npx, 100%), 1fr)`，不要直接 `minmax(Npx, 1fr)` |
+| **滚动同步** | 用 `transform: translateY()`，不用 `top` / `left`（前者走 GPU，后者触发 layout 重排） |
+| **tap-highlight** | 全局 `-webkit-tap-highlight-color: transparent` |
+| **滚动条配色** | Firefox `scrollbar-color` + Webkit `::-webkit-scrollbar-*`，水蓝 `#66CCFF` |
+| **不允许新增断点** | 只用上面四档 + 720 给汉堡菜单触发 |
 
-Safebooru 搜索黄金组合：
-```
-1girl + solo + upper_body + looking_at_viewer + smile + <topic>
-+排除: -from_behind -from_side -1boy -character_name -sample_watermark -comic -happy_birthday
-```
+### 玻璃风视觉系统
 
-**下载后必须用 Read 工具实际看一眼图**——LLM 基于 tag 推断「这张应该露脸」常常出错。
+CSS 变量统一定义在 `:root`（[src/styles/global.css](src/styles/global.css)）：
 
-### 3. 字体
-
-用 **LXGW WenKai Screen**（霞鹜文楷 屏幕版），通过 jsDelivr CDN 按字符 chunk 加载：
-
-```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">
-```
-
-`global.css` body 字体链：`'LXGW WenKai Screen', 'LXGW WenKai', -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`
-
-不要再加 Atkinson 之类英文字体——对中文无效。
-
-### 4. 玻璃主题约定
-
-CSS 变量在 `:root`：
 ```css
 --glass-bg: rgba(255, 255, 255, 0.55);
 --glass-border: 1px solid rgba(255, 255, 255, 0.45);
@@ -71,856 +129,409 @@ CSS 变量在 `:root`：
 --glass-blur: blur(18px) saturate(180%);
 ```
 
-要兼容 Safari → 同时写 `backdrop-filter` 和 `-webkit-backdrop-filter`。
+- 用 `backdrop-filter` 时**必须**同写 `-webkit-backdrop-filter`（Safari）
+- 主题色：accent 蓝 `#2337ff` / 强调粉 `#ff5d8f` / 滚动条水蓝 `#66CCFF`
+- 中性灰按钮底 `rgba(0,0,0,0.04)`，hover 染主题色
 
-### 5. 背景图
+### 字体
 
-放 `src/assets/bg.jpg`，CSS 用相对路径 `url('../assets/bg.jpg')` 让 Vite 打包（自动 hash + cache busting）。**不放 public/**——失去优化和缓存破坏。
+- 用 **LXGW WenKai Screen**，jsDelivr CDN 按字符 chunk 加载
+- `body` 字体链：`'LXGW WenKai Screen', 'LXGW WenKai', -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`
+- 不要加 Atkinson 等英文字体——对中文无效
 
-### 6. 粘性 footer
+### 背景图
 
-`body` flex column + `min-height: 100vh` + `footer { margin-top: auto }`——短页面 footer 自动贴底。
+- 源图放 `src/assets/bg.jpg`，CSS 用 `url('../assets/bg.jpg')` 让 Vite 打包
+- **必须**用独立 `BgLayer.astro` 组件渲染——挂到 body 上会被祖先 `backdrop-filter` 冻结
+- 视差：scroll 进度同步到 `--bg-y`，由 `BgScrollSync.astro` 用 `requestAnimationFrame` 节流
 
-### 7. Featured / 置顶
+### 图标
 
-- Schema：`featured: z.boolean().optional().default(false)`（在 `src/content.config.ts`）
-- 排序：`featured` 优先，再按 `pubDate` 倒序（在 `src/pages/blog/index.astro`）
-- 列表页有 📌 置顶徽章
+- 全部用 inline SVG，**不用 emoji**（emoji 跨 OS 渲染不一致）
+- SVG 尺寸**写 HTML 属性**：`<svg width="22" height="22">`，不靠 CSS（Astro scoped CSS 跨边界有 bug）
+- 容器统一 40px 圆按钮 + `flex-shrink: 0` 兜底
+- 颜色用 `fill="currentColor"`，CSS 改 `color` 控制
 
-### 8. 背景层必须独立（关键 bug 防御）
+### 动画与无障碍
 
-**别把 bg-image 直接挂 body**——当 body 用 `background-attachment: fixed` AND 子元素有 `backdrop-filter` 时，浏览器（Chrome/Safari）会把 fixed bg 当快照「冻结」，**JS 更新 `background-position` 视觉上不生效**。
-
-**正确做法**：bg 拆到独立的 `BgLayer.astro` 组件：
-```astro
-<div class="bg-layer" style={`background-image: url(${bgImage.src})`} />
-<style is:global>
-  .bg-layer {
-    position: fixed; inset: 0; z-index: -10;
-    background-position: center var(--bg-y, 0%);
-    background-size: cover;
-    background-repeat: no-repeat;
-    pointer-events: none;
-  }
-</style>
-```
-body 只保留 `linear-gradient` fallback。
-
-### 9. Parallax 滚动同步（背景滑块效果）
-
-把 scroll 进度映射到 CSS 变量 `--bg-y`，配合 `BgLayer` 实现「页头看图顶 / 页尾看图底」：
+任何视觉动画必须有两道守卫：
 
 ```js
-const update = () => {
-  const sy = window.scrollY;
-  const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  const pct = Math.min(1, Math.max(0, sy / max));
-  document.body.style.setProperty('--bg-y', (pct * 100).toFixed(2) + '%');
-};
-let raf = 0;
-window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { update(); raf = 0; }); }, { passive: true });
+if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;       // 触屏跳过
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;        // 减少动画偏好跳过
 ```
 
-**必须用 `requestAnimationFrame` 节流**，不要 setTimeout / debounce。组件位置：`src/components/BgScrollSync.astro`。
+CSS 等价：
 
-### 10. 搜索 overlay popover（取代独立搜索页）
-
-`/search` 全页搜索过时——Header 🔍 应该是 button，点击弹 460px 浮窗：
-- 用 Pagefind JS API（`/pagefind/pagefind.js`）+ 自定义 UI，**别用默认 PagefindUI**（中文翻译 / 样式都不好）
-- 必须用 `<script is:inline>` 包裹动态 import（Vite 在 build 时找不到这个文件）
-- 快捷键：`/` 全局打开 / `ESC` 关闭 / 点 backdrop 关闭
-
-实现见：`src/components/SearchOverlay.astro`，挂载在 `Footer.astro`（每页都有）。
-
-### 11. 多 section 玻璃卡布局（复杂页面规范）
-
-首页 / 关于页这种「内容多」的页面**别用一张大卡装到底**，拆成多张玻璃卡：
-
-```html
-<main style="display:flex; flex-direction:column; gap: 1.2em">
-  <section class="card hero">...</section>
-  <section class="card">...</section>
-  <section class="card">...</section>
-</main>
-```
-
-每张 card 用统一的 glass CSS（复用 `--glass-*` 变量），main 改成透明（重置 global.css 里 main 的玻璃样式）。
-
-### 12. 人格驱动 UI 文案
-
-如果项目有人格定义文件（如根目录 CLAUDE.md 里的爱莉希雅人格），UI 文案**直接套人格招牌句式**：
-- 爱莉希雅：「如你所见」「悄悄告诉你哦」「不是吗？」+ 飞花/星/光辉自然意象
-- **「短句优先」≠「全部短句」**——招牌长句要留着，只是平均长度短一些
-
-打字机首页问候、404 文案、关于页签名都用这套语言。
-
-### 13. 动画 & 触屏检测（无障碍 + 体验）
-
-任何视觉动画（拖尾、Live2D、自动滚动）必须先检测：
-```js
-if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;  // 触屏跳过
-if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;  // 减少动画偏好跳过
-```
-
-或 CSS 内：
 ```css
 @media (prefers-reduced-motion: reduce) {
   .my-anim { animation: none !important; }
 }
 ```
 
-### 14. 响应式四档断点（统一）
+### 共享 keyframes
 
-全站只用这四档，不要再发明：
+复用 ≥ 3 处的动画定义在 [src/styles/global.css](src/styles/global.css)：
+- `avatar-wiggle`（首页 / 关于 / sidebar 头像）
+- `card-wiggle`（博文卡片 hover）
+- 调用处只写 `:hover { animation: name 0.5s ease }` + reduced-motion 守卫
 
-| 视口 | 名称 | 主要特征 |
-|------|------|----------|
-| ≤ 640px | 移动 | 单列堆叠，drawer 已展开，sidebar 隐藏 |
-| 641–960px | 平板/竖屏 | sidebar 折顶部横向网格，博文卡仍横向 |
-| 961–1280px | 桌面（默认设计宽度） | 双栏 + 完整 sidebar |
-| > 1280px / ≥ 1400 / ≥ 1800 | 大屏 | 解锁更宽内容（博客列表 1500 / 1680） |
+## 关键陷阱（必避）
 
-不要乱加 720 / 768 / 1024 之类的额外断点——汉堡菜单触发例外用 720（社交图标也在此消失，UX 一致）。
+这些是 Astro / 玻璃风 / 滚动动画组合下的硬约束，违反会出可见 bug。
 
-### 14.1. Grid auto-fit 防溢出：`minmax(min(Npx, 100%), 1fr)`
+### 1. `backdrop-filter` 祖先 → `position: fixed` 后代退化
 
-写卡片网格的标准模板**永远**用这个 pattern：
-```css
-.cards { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
-```
+`backdrop-filter / transform / filter / will-change` 都会创建 containing block。任何在 `.prose`（带 backdrop-filter）内部的 `position: fixed` 元素**实际上变成 absolute**，被 .prose 限制。
 
-**别**直接写 `minmax(280px, 1fr)`——当父容器内宽 < 280px（窄屏 / 嵌套卡片），minmax 的最小值会强制 280px，卡片**撑出容器右边界**，视觉上像是错位/对不齐。
+**修法**：fullscreen 代码块 / lightbox 必须 JS portal 到 `document.body` 直接子级；退出时用 anchor comment 找回原位。
 
-`min(Npx, 100%)` 让最小值在父容器够宽时是 Npx（保持原有断点行为），父容器窄时退化为 100%（卡片乖乖填满）。已统一应用到：
-- `index.astro` `.post-cards` (280) / `.now-grid` (220)
-- `friends.astro` `.friends-grid` (260)
-- `memories.astro` `.memory-grid` (280)
-- `about.astro` `.proj-grid` (200)
-- `Sidebar.astro` (220)
-- `categories/index.astro` `.cat-list` (180)
+### 2. Page-scoped CSS 不下钻子组件
 
-### 15. 宽度策略：`min()` 替代 `width + max-width`
+Astro 6 给 page 的选择器加 `[data-astro-cid-PAGE]`，子组件渲染的元素只带**子组件的 cid**，page 的 scoped 规则匹配失败。
 
-旧写法（别用）：
-```css
-main { width: 720px; max-width: calc(100% - 2em); }
-```
+**修法（优先级递减）**：
+1. `:global(.card-media img)` 包后代选择器（最小改动）
+2. 样式搬进子组件 `<style is:global>`
+3. 子组件接 `class` prop 透传
 
-新写法（推荐）：
-```css
-main { width: min(720px, 100% - 2em); }
-```
+### 3. Inline script 必须包 DOMContentLoaded
 
-一行同时管最大宽和窄屏 padding。大屏断点直接覆盖 `width`，不需要 max-width。
+`<script is:inline>` 在 HTML 解析到该位置时立即执行——`.prose` / TOC 等后续元素此时还未渲染。
 
-### 16. 流式字号 + 全局 box-sizing
-
-- `body { font-size: clamp(16px, 0.6vw + 14px, 20px); }` —— 整站字号随视口缩放
-- hero / 标题用 `font-size: clamp(1.8em, 4vw + 1em, 2.8em)` 防止窄屏顶到边
-- **全局 `*, *::before, *::after { box-sizing: border-box }` 必须有**——否则 `.btn { width: 100% }` + padding 会溢出父容器（手机端 CTA 按钮踩过坑）
-
-### 17. 博客列表卡片 = 单列横向 + 奇偶交错 + 置顶差异化
-
-不要再用「双列网格 + 第一项特色大卡」旧布局。新规：
-
-- 全部卡片**单列堆叠**，每张内部 `display: grid; grid-template-columns: 320px 1fr`
-- 奇偶交错：`:nth-child(even) a { grid-template-columns: 1fr 320px } + .card-media { order: 2 }`
-- **置顶博文（`featured: true`）独立样式**：grid 改单列、21:9 全宽大图、大标题、暖色金边背景。**只靠 📌 徽章区分不够**
-- 平板（≤960）：图缩到 220px，奇偶继续交错
-- 移动（≤640）：所有卡片图上文下单列堆叠
-
-实现见 `src/pages/blog/[...page].astro`。
-
-### 18. 卡片微动效：wiggle + press
-
-博文卡片必须有 hover/active 反馈，但**别用持续 shake**：
-
-```css
-.card a:hover { transform: translateY(-4px); box-shadow: 0 12px 36px ...; }
-.card a:hover .card-media img { animation: card-wiggle 0.5s ease; }
-.card a:active { transform: scale(0.985) translateY(-2px); }
-
-@keyframes card-wiggle {
-  0%, 100% { transform: scale(1) rotate(0); }
-  20%      { transform: scale(1.05) rotate(-1.2deg); }
-  60%      { transform: scale(1.05) rotate(1.2deg); }
-  80%      { transform: scale(1.05) rotate(-0.6deg); }
-}
-```
-
-- **一次性 wiggle**：4 关键帧 < 0.5s，不会让人晕
-- **active scale(0.985)**：轻微下沉，不是塌陷
-- 必须有 `@media (prefers-reduced-motion: reduce) { animation: none }` 守卫
-
-### 19. 移动端 drawer 抽屉模式（≤720px）
-
-汉堡菜单不能用纯 CSS（`<details>` 在 drawer 不够灵活），用 `<script is:inline>` 自己实现：
-
-```html
-<button class="hamburger" data-drawer-toggle aria-expanded="false" aria-controls="mobile-drawer">
-  <span class="hb-bar"></span><span class="hb-bar"></span><span class="hb-bar"></span>
-</button>
-
-<div class="drawer-backdrop" data-drawer-backdrop aria-hidden="true"></div>
-<aside id="mobile-drawer" class="drawer" data-drawer aria-hidden="true">
-  ...
-</aside>
-```
-
-必备能力（缺一不可）：
-1. **关闭路径四种**：× 按钮 / backdrop 点击 / ESC / 点任意 drawer 内的 `<a>`
-2. **a11y**：`aria-expanded` / `aria-hidden` / `aria-controls` 全配齐
-3. **body 滚动锁**：抽屉打开时 `body.drawer-open { overflow: hidden }`，避免背后误滑
-4. **可折叠组**（如博客 → 分类/标签）：用 `position: absolute` 的 caret 按钮，**不要用 flex row**，否则父项被挤位失去对齐
-5. **drawer 内菜单项统一 `text-align: center` + `display: block`**——视觉对齐才能整齐
-
-实现见 `src/components/Header.astro`。
-
-### 20. 嵌入式胶囊 ticker（移动端最近文章）
-
-替代 sidebar 在移动段消失带来的「最近文章」入口缺失：
-
-- 嵌入 `<nav>` 内部（不是 header 下方独立条），占站名位置
-- **玻璃胶囊样式**：`border-radius: 999px` + inset 高光 + 下方阴影 + backdrop-blur
-- 左侧 6px 脉动小圆点（不用 emoji，比表情更克制）
-- 5 篇最新 + 1 篇尾部复制 = 6 个 li，translateY 每步 `-100/6 ≈ -16.667%`
-- **速度**：每项展示 5s 左右（< 3s 太快）
-- 必须有 `prefers-reduced-motion: reduce` 跳过
-
-#### ticker 致命 CSS bug（已踩过，别再踩）
-
-父容器 `align-items: center` + 内部高列表 `position: relative` = 列表被**垂直居中在父容器中点**，translateY 数学全错（可见窗口落在 list 中段而非顶部）。
-
-**必须用 `.ticker-window` 内层包裹列表**：
-- `.ticker-window { height: 100%; overflow: hidden; position: relative }`
-- `.ticker-list { position: absolute; top: 0; left: 0; right: 0 }`
-
-绝对定位的 list 不受父级 align-items 影响。
-
-### 21. Sidebar 三段行为
-
-| 视口 | Sidebar |
-|------|---------|
-| > 960px | 左侧 280-300px 双栏 |
-| 641-960 | 折到顶部，3 卡 `repeat(auto-fit, minmax(220px, 1fr))` 横向铺开 |
-| ≤ 640 | **完全隐藏**——移动端 nav 里的 ticker 已经覆盖了「最近文章」入口 |
-
-写法在 `src/components/Sidebar.astro` 末尾的 `@media` 里。
-
-### 22. 文章正文宽度上限
-
-`.prose` 宽度阶梯：
-
-| 视口 | prose 宽度 |
-|------|------------|
-| 默认 | `min(840px, 100% - 2em)` |
-| ≥ 1400 | `min(960px, 100% - 4em)` |
-
-**不要超过 960px**——中文阅读舒适宽度上限。再宽用户眼睛会跟不上行。需要充分利用大屏空间的话，做 TOC 侧栏而不是把正文撑宽。
-
-### 23. 客户端 TOC 组件（`TableOfContents.astro`）
-
-文章页的目录侧栏。**不是从 Astro 的 `headings` API 取**——那个只能在页面文件用，layout 拿不到。改成：
-
-- 客户端 DOM 扫描：`document.querySelectorAll('.prose h2, .prose h3')`
-- 自动给标题 slugify + 加 id（中文支持：`replace(/[^\w一-龥\s-]/g, '')`）
-- 编号：h2 = `1.`、`2.`、…，h3 = `1.1`、`1.2`、…
-- 主动态：粉色渐变胶囊 + 右侧 5px 小圆点（`#c2185b`）
-- Scroll-spy：`requestAnimationFrame` 节流，遍历 headings 找当前最贴近顶部的（96px 缓冲）
-
-**⚠ 致命陷阱**：`<script is:inline>` 在 HTML 解析到该位置时立即执行，TOC 组件在 `.prose` 之前，所以 `querySelector('.prose')` 会返回 null。**必须包进 DOMContentLoaded**：
 ```js
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initTOC);
+  document.addEventListener('DOMContentLoaded', init);
 } else {
-  initTOC();
+  init();
 }
 ```
 
-**位置策略（桌面）**：用 `position: fixed; left: 16-32px`（左边贴边）+ `transform: translateY()` 由 JS 控制 top 值。**别用 `top` 属性做平滑跟随**——每帧改 `top` 触发 layout 重排，scroll 时严重卡顿。`transform` 走 GPU 合成层，丝滑。
+### 4. `.md` 和 `.mdx` 共享 remarkPlugins
+
+`astro.config.mjs` 顶层 `markdown.remarkPlugins` **只影响 `.md`**。`.mdx` 走 mdx integration 自己的配置。
 
 ```js
-const updateTocTop = () => {
-  const top = Math.max(stickyTop, Math.round(heroBottom + 20));
-  if (top === curTop) return; // 整数像素相同就早退，避免无谓重绘
-  curTop = top;
-  desktop.style.transform = `translateY(${top}px)`;
-};
-```
-
-**位置策略（移动 ≤640）**：用 `position: fixed` 让 TOC bar 浮到 header 位置占替代 ticker。**别用 JS DOM teleport** —— querySelector 失败/Astro 渲染时机不稳定都会让搬运静默失败。纯 CSS 才靠谱：
-```css
-@media (max-width: 640px) {
-  body.has-toc header .ticker { display: none !important; }
-  body.has-toc .toc-mobile {
-    position: fixed !important;
-    top: 7px; left: 50px; right: 48px;
-    z-index: 11;
-  }
-  body.has-toc.header-hidden .toc-mobile {
-    transform: translateY(-160%);
-  }
-}
-```
-
-**FAB（窄屏右下角浮动按钮）**：回到顶部 / 滚到底部 / × 折叠手柄。点 × **折叠** 不是删除——`is-collapsed` 类让 scroll 按钮 `scale(0)` + `margin-top: -56px` 塌缩布局，× 缩小成 40×40 粉色小手柄。再点回弹。
-
-### 24. Header 自动隐藏 + body 类协调
-
-下滑藏 header（`transform: translateY(-100%)`），上滑现身，**贴顶 80px 内永远显示**。
-关键：同时设置 `document.body.classList.toggle('header-hidden')`——让 TOC 等组件能跟着联动。
-
-```js
-if (y < 80) {
-  header.classList.remove('is-hidden');
-  document.body.classList.remove('header-hidden');
-} else if (diff > 0) {
-  header.classList.add('is-hidden');
-  document.body.classList.add('header-hidden');
-}
-```
-
-**抽屉打开时强制显示** header——抽屉里就是从 header 展开的内容，header 消失会让用户失去位置感。
-
-### 25. 统一图标按钮风格（顶栏 / 抽屉 / sidebar / about 一致）
-
-社交/邮箱/搜索图标全部用 SVG（不是 emoji）。emoji 在不同 OS 渲染不一样，SVG 才是稳定的。
-
-```css
-.social-links a {
-  width: 40px; height: 40px;
-  background: rgba(0, 0, 0, 0.04);   /* 默认中性灰 */
-  color: rgb(var(--gray));
-  border-radius: 50%;
-}
-.social-links a:hover {
-  background: rgba(35, 55, 255, 0.1);
-  color: var(--accent);              /* hover 染主题色 */
-  transform: translateY(-2px);
-}
-.social-links svg {
-  width: 22px; height: 22px;         /* 显式 CSS 控制 SVG 尺寸 */
-}
-```
-
-**邮箱链接**用 `<a href="mailto:xxx@xx.com">`，封信图标 SVG 路径自带。
-
-### 26. CSS 特异性陷阱：相同特异性按源序
-
-`nav a:hover` 想排除 `<h2><a>` 网站标题。直接写 `h2 a:hover` 不行——它和 `nav a:hover` 特异性都是 (0,1,1)，源序后写的赢。
-
-**解法**：用 `nav h2 a:hover`（0,1,2）显式提高一档。
-
-```css
-nav a:hover { color: var(--accent); /* ... */ }
-nav h2 a:hover {
-  color: var(--black);
-  border-bottom-color: transparent;
-  background: transparent;
-}
-```
-
-### 27. 最近文章用 6 篇而不是 3/4 篇（数学最优解）
-
-首页 `.post-cards` 是 `repeat(auto-fit, minmax(280px, 1fr))`，根据视口宽度会铺 1/2/3 列。
-- 3 篇：3 列满，2 列剩 1 孤儿
-- 4 篇：2 列满，3 列剩 1 孤儿
-- **6 篇 = LCM(2,3)：2 列铺 3 行，3 列铺 2 行，永远整齐**
-
-### 28. 搜索浮窗（SearchOverlay）：flex 居中替代 top:64 right:24
-
-旧实现：浮窗钉在 header 右上角。问题：大屏视线要奔波。
-
-**新实现**：用 `.search-overlay` 做 flex 容器，居中：
-```css
-.search-overlay {
-  position: fixed; inset: 0;
-  display: flex;
-  align-items: flex-start;        /* 不竖直居中——结果列表向下展开，浮窗要靠上一点 */
-  justify-content: center;
-  padding: 12vh 16px 16px;
-}
-.search-popover {
-  width: min(560px, 100%);
-  /* 大屏阶梯加宽 */
-}
-@media (min-width: 1280px) { .search-popover { width: 640px; } }
-@media (min-width: 1800px) { .search-popover { width: 740px; } }
-```
-
-### 29. 鼠标拖尾：几何混搭（菱形 + 三角）
-
-参考 [xhblog.top](https://xhblog.top) 的风格，从纯方块改成混搭：
-- 每 3 个夹 1 个三角形（`◇ ◇ △ ◇ ◇ △`）
-- 三角用 inline SVG：`<polygon stroke="currentColor" fill="none" />`，颜色随 dot
-- 菱形用 CSS border + transform: rotate(45deg)
-- 18px 菱形 / 20px 三角，1.8px 描边
-- 三角用 SVG 的 `drop-shadow` filter（不能用 box-shadow，方框 glow 会出戏）
-- 节流 22ms（~45fps），最多 26 个同时存在，900ms 寿命
-
-### 30. 通用约定：scroll 监听必须用 transform 而不是 top/left
-
-每次 scroll 事件可能触发数十次回调。**改 `top` / `left` 触发 layout 重排**（几 ms 一次），叠加 `backdrop-filter` 这种重特效就掉帧。**改 `transform` 走 GPU 合成层**，~1ms。
-
-```js
-// ❌ 慢
-element.style.top = newTop + 'px';
-
-// ✅ 快
-element.style.transform = `translateY(${newTop}px)`;
-```
-
-配 `will-change: transform` 给浏览器提示开独立合成层。
-
-### 31. giscus 自定义主题 + cache busting
-
-giscus 主题可以是内置名（`light`/`dark`/`noborder_light`）或自定义 CSS URL。本站用自定义：[public/giscus-theme.css](public/giscus-theme.css)（透明面板 + 粉色按钮 + 圆角胶囊），通过 `data-theme={URL}` 注入。
-
-**两个必须知道的坑**：
-
-1. **dev 模式回退**：localhost 是 HTTP，加载到 HTTPS 的 giscus iframe 里被 mixed-content 拦截。所以 [Comments.astro](src/components/Comments.astro) 用 `import.meta.env.DEV ? 'light' : customUrl`。**dev 模式下看不到自定义主题是预期的**——build 后才生效。
-
-2. **cache busting**：iframe 会缓存 theme CSS。改了 `giscus-theme.css` 重部署，旧 iframe 还在拉旧版。修法：URL 拼 `?v={build-time-unix-ts}`：
-   ```ts
-   const themeVersion = Math.floor(Date.now() / 1000);
-   const giscusTheme = `${siteOrigin}/giscus-theme.css?v=${themeVersion}`;
-   ```
-   每次 build 都是新 URL，iframe 必然重拉。
-
-**iframe 内部的 backdrop-filter 无效**：iframe 是独立渲染上下文，blur 看不到外层博客玻璃卡——纯白 alpha 半透明在 iframe 里没法靠 blur 出质感，**只能靠极低 alpha + 细描边**（`rgba(255,255,255,0.08)` + `border: 1px solid rgba(255,255,255,0.4)`）勾轮廓。
-
-**giscus 排序 BumpButton 的 DOM 反直觉**：
-```html
-<li aria-current="true|false" class="BtnGroup-item">
-  <button class="btn">最早/最新</button>
-</li>
-```
-active 标记在**父 `<li>`** 上，不是 button——选择器要从父级走：`.BtnGroup-item[aria-current="true"] .btn`。
-
-### 32. SVG 尺寸：Astro scoped CSS 下必须用 inline 属性，CSS 不可靠
-
-实际踩过：`.social-links svg { width: 26px !important; height: 26px !important }` ——DevTools Computed 面板显示 26px 已应用，但 SVG 实际渲染 `0 × 26`。Astro 的 `data-astro-cid-xxx` scoped 选择器与 SVG 跨边界时，**CSS 应用了但布局没生效**（疑似浏览器 bug）。
-
-**修法**：直接在 `<svg>` inline 写 `width="26" height="26"`（HTML 属性优先级最高，不走 CSS）。再加 `flex-shrink: 0` 作为兜底，防止 flex 父容器压缩。
-
-CSS 用来设 fill/color：
-```html
-<svg viewBox="0 0 16 16" width="26" height="26"><path fill="currentColor" d="..."/></svg>
-```
-```css
-.social-links svg { flex-shrink: 0; fill: #222939; color: #222939; }
-.social-links svg path { fill: currentColor; }
-```
-
-### 33. 禁用移动端默认 tap-highlight
-
-iOS Safari / Android Chrome 默认点击会闪一下蓝色方块（`-webkit-tap-highlight-color`），跟所有自定义 active 反馈冲突。全局禁掉：
-```css
-html { -webkit-tap-highlight-color: transparent; }
-a, button, input, select, textarea, [role='button'] {
-  -webkit-tap-highlight-color: transparent;
-}
-```
-站点自己的 `:active` / `:hover` 反馈接管视觉。
-
-### 34. 自定义滚动条
-
-Firefox 用 `scrollbar-color`，Chrome/Safari/Edge 用 `::-webkit-scrollbar`。两边都要写：
-```css
-html {
-  scrollbar-color: #66CCFF transparent;
-  scrollbar-width: thin;
-}
-::-webkit-scrollbar { width: 12px; height: 12px; }
-::-webkit-scrollbar-thumb {
-  background-color: #66CCFF;
-  border-radius: 999px;
-  border: 3px solid transparent;       /* 透明 border 让 thumb 视觉变窄，留呼吸 */
-  background-clip: content-box;
-}
-```
-**iOS Safari 不支持** ——是系统级控制，手机端依旧默认灰。
-
-### 35. nav 选中态：粉色胶囊替代方形 border-bottom
-
-旧方案 `border-bottom: 4px solid var(--accent)` 是方形下划线——在窄屏 + 圆角整体语言里非常突兀。改成：
-```css
-nav a {
-  border-radius: 999px;
-  padding: 0.55em 1em;
-}
-nav a:hover { background: rgba(255, 93, 143, 0.1); color: #ff5d8f; }
-nav a.active {
-  background: linear-gradient(135deg, rgba(255,209,228,0.85), rgba(255,183,197,0.75));
-  color: #ff5d8f;
-  box-shadow: 0 2px 6px rgba(255, 144, 192, 0.2);
-}
-```
-HeaderLink 里的 `text-decoration: underline` 也要删——active 视觉完全交给 nav 自己的胶囊。
-
-### 36. 阅读进度环：SVG stroke-dashoffset
-
-文章页 TOC 浮条左侧的进度环——半径 r 的圆周长 = 2πr，dashoffset 从「周长」（空）滚到 0（满）：
-```html
-<svg viewBox="0 0 36 36" width="34" height="34">
-  <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(0,0,0,0.14)" stroke-width="3.5"/>
-  <circle id="toc-progress-arc" cx="18" cy="18" r="14" fill="none" stroke="#ff5d8f" stroke-width="3.5"
-    stroke-dasharray="87.96" stroke-dashoffset="87.96" stroke-linecap="round"
-    transform="rotate(-90 18 18)"/>
-</svg>
-```
-```js
-const C = 87.96; // = 2π × 14
-const progress = scrollY / (scrollHeight - innerHeight);
-arc.style.strokeDashoffset = String(C * (1 - progress));
-```
-配 `transition: stroke-dashoffset 0.15s linear` 让填充顺滑。`requestAnimationFrame` 节流。
-
-### 37. 头像 hover wiggle（全局 keyframes）
-
-`@keyframes avatar-wiggle` 定义在 [global.css](src/styles/global.css)，三处复用（index hero / about hero / blog sidebar profile）——避免在三个组件各写一份。
-
-每处只写 `:hover` 触发 + reduced-motion 守卫：
-```css
-.avatar { cursor: pointer; will-change: transform; }
-.avatar:hover { animation: avatar-wiggle 0.6s cubic-bezier(0.36, 0, 0.45, 1.4); }
-@media (prefers-reduced-motion: reduce) { .avatar:hover { animation: none; } }
-```
-
-cubic-bezier 第 4 个参数 1.4 给出末段 overshoot——bounce 感比线性 ease 更可爱。
-
-### 38. Page-scoped CSS 不下钻子组件渲染的元素（重灾区）
-
-Astro 6 的 page scoped CSS 编译时给选择器尾部加 `[data-astro-cid-XXX]`：`.card-media img` → `.card-media img[data-astro-cid-A]`。但子组件里的 img 只带**子组件**的 cid，page 的 scoped 规则匹配失败——视觉上像 CSS 完全没生效，但 DevTools 里规则仍存在。
-
-**同一根因已踩两次**：引入 HeroImage 组件接管 hero 图渲染后——
-- `.card-media img { width:100%; height:100%; object-fit:cover }` 失效 → img 用 natural 640px 左对齐，右侧露出 LQIP 背景（置顶卡 21:9 容器最明显）
-- `.post-card a:hover .card-media img { animation: card-wiggle }` 失效 → hover wiggle 没了
-- `.post-list img { width:150px; height:80px }` 失效 → 分类/标签页缩略图沿用 natural 300×150 溢出 flex 布局
-
-**三种修法**（按推荐度）：
-
-1. **`:global()` 包后代选择器**（最局部，改动最小）：
-   ```css
-   :global(.card-media img) { transition: transform 0.3s ease; }
-   :global(.post-card a:hover .card-media img) { animation: card-wiggle 0.5s ease; }
-   ```
-   注意 `:global()` 完全跳出 scope；确认本项目只有一处用该 class，避免误伤。
-
-2. **样式搬进子组件 `<style is:global>`**（适合通用 baseline）：
-   「所有用 HeroImage 的地方都该 cover」这类规则写在 HeroImage.astro 内部全局块，组件自己兜底，page 不用关心。
-
-3. **prop + class 透传**：HeroImage 接 `class` prop 传给 wrap，page 用自己的 scoped class 控制——最灵活但最啰嗦。
-
-**自检触发条件**：每次让子组件渲染原本由 page-scoped CSS 控制的元素（img / svg / a / button），先问自己「这些 scoped 规则匹配得到子组件渲染出来的元素吗？」答案是「不能」就立刻改 `:global()` 或把规则搬进子组件。
-
-### 39. .md 和 .mdx 的 remarkPlugins 是分开的（已修复，留作约定）
-
-`astro.config.mjs` 顶层 `markdown.remarkPlugins` **只影响 `.md` 文件**。`.mdx` 走 `@astrojs/mdx` integration 自己的 markdown 配置，**不会继承顶层 remarkPlugins**。
-
-**已修法**（current astro.config.mjs）：把 `remarkPlugins` 提为共享 const，同时给 `mdx({ remarkPlugins })` 和 `markdown.remarkPlugins` 注册：
-```js
-import mdx from '@astrojs/mdx';
-import remarkDirective from 'remark-directive';
-import remarkShokaDirectives from './plugins/remark-shoka-directives.mjs';
-const remarkPlugins = [remarkDirective, remarkShokaDirectives];
+const remarkPlugins = [remarkDirective, remarkShokaDirectives, ...];
 export default defineConfig({
-  integrations: [mdx({ remarkPlugins })],
-  markdown: { remarkPlugins },
+  integrations: [mdx({ remarkPlugins })],   // ← .mdx 用这个
+  markdown: { remarkPlugins },              // ← .md 用这个
 });
 ```
 
-当前 7 篇博文全是 `.md`，已经把 `mdx({ remarkPlugins })` 也注册——以后写 `.mdx` 不用再改。
+### 5. CSS 特异性陷阱
 
-### 40. 供应链审查教训：obfuscated preinstall 一律否决
-
-2026-05-19 尝试集成 `@antv/infographic@0.3.19`，部署红。根因：包里有一个 498KB obfuscated `index.js` 在 `preinstall` lifecycle hook 跑：
-- `createHash` / `pbkdf2Sync` / `randomBytes` 等 crypto API
-- 27 处 `fetch` + 5 处 `http` + 多处 `fs.*`
-- 强制要求 bun（绕开 npm/pnpm/yarn 用户视线）
-
-回滚后总结约定：**新引入任何 npm 包前，必做的安全 checklist**：
-1. `grep -E 'preinstall|postinstall' node_modules/<pkg>/package.json`——有 install hook 就要看脚本内容
-2. install hook 脚本 ≥ 50 行 + 看不懂 = 默认拒绝
-3. obfuscated 代码（变量名形如 `_0x1234`、单文件几百 KB）= 直接拒绝
-4. 强制非主流 runtime（bun-only / deno-only）= 警惕
-5. crypto + fetch 组合在 install hook 里 = 大概率 phone-home，否决
-
-如果某天真要用 antv：clone 源码自己 build，绕开 npm 分发版的 install hook。
-
-### 40b. `backdrop-filter` 在祖先上让后代 `position: fixed` 退化（fullscreen / lightbox 必须 portal）
-
-CSS 规范：当一个 fixed 元素的某个**祖先**有 `transform / filter / backdrop-filter / will-change` 等会创建 containing block 的属性时，**该 fixed 元素相对该祖先定位**，而不是 viewport。
-
-`.prose` 用了 `backdrop-filter: blur(18px) saturate(180%)` 实现玻璃风——所以**任何 .prose 内的 `position: fixed` 都会塌**：被 .prose 限制位置 + 被 .prose 的 `overflow: hidden` 裁切（如果有）。
-
-**实战踩过两次**：
-1. **代码块全屏放大**：`pre.astro-code.is-fullscreen { position: fixed; inset: 5vh 5vw; z-index: 1000 }` —— pre 在 .prose 内，fullscreen 失败（用户报告「点放大代码块消失了」）
-2. **正文图 lightbox**：同样问题
-
-**修法（唯一可靠）**：JS portal 把元素临时移到 `document.body` 直接子级 + anchor comment 标记原位：
-
-```js
-// 进入：放 anchor 占位 + 移到 body
-const anchor = document.createComment(' fs-anchor ');
-elem.parentNode.insertBefore(anchor, elem);
-elem._origAnchor = anchor;
-document.body.appendChild(elem);
-elem.classList.add('is-fullscreen');
-
-// 退出：anchor 找回原位
-const anchor = elem._origAnchor;
-anchor.parentNode.insertBefore(elem, anchor);
-anchor.remove();
-elem.classList.remove('is-fullscreen');
-```
-
-**配套**：fullscreen 状态的 CSS 选择器**不要带 `.prose` 前缀**（portal 后元素不在 .prose 内）；如果原始样式 scoped 在 `.prose pre.astro-code`，去掉前缀让它在 body 内也能匹配。
-
-**遮罩**：不要用 `body::before` 单独画遮罩（同样的 stacking trap）。直接用 fullscreen 元素自己的 `box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7)` 模拟全屏暗背景。或者 portal 一个独立 `<div class="backdrop">` 跟 fullscreen 元素并列在 body 子级。
-
-### 41. ```mermaid 代码块画图（客户端 lazy load）
-
-博文里写 ```` ```mermaid ```` fenced code block 即可——build 时 [plugins/remark-mermaid.mjs](plugins/remark-mermaid.mjs) 把它包成 `<pre class="mermaid">`，[BlogPost.astro](src/layouts/BlogPost.astro) 末尾的 inline script 在**有 mermaid 块的页面**才 dynamic import `mermaid`（~600KB core + 按需 chunk）并 init。
-
-````markdown
-```mermaid
-graph TD
-  A[开始] --> B{条件?}
-  B -->|是| C[执行]
-  B -->|否| D[跳过]
-```
-````
-
-**关键约定**：
-
-1. **lang 必须是 `mermaid`**——跟 GitHub / VitePress / Obsidian 同款，迁移友好
-2. **客户端渲染**——`mermaid.run({ querySelector: '.prose .mermaid' })` 在 DOM ready 后跑；不含 mermaid 块的页面**零负担**
-3. **玻璃主题已注入**——`mermaid.initialize` 里 `themeVariables` 设了 `primaryColor #dde7ff` / `primaryBorderColor #2337ff` / `lineColor #66ccff` / `secondaryColor #ffd1e4`，跟站点 `--accent` 系列对齐
-4. **支持的图类**：flowchart / sequenceDiagram / classDiagram / stateDiagram / pie / mindmap / quadrantChart / sankey / gitgraph / erDiagram 等 ~20 种
-5. **CSS 容器**：`.mermaid-figure` 在 `global.css`，玻璃卡 + 边距 + 移动响应式
-
-**Bundle 体积参考**（Astro chunk split）：
-- mermaid.core: ~607KB（必装）
-- 按使用的 diagram 类型按需载（如 architectureDiagram 149KB / cytoscape 442KB / wardley 612KB）
-- 不用 mermaid 的页面 0KB JS 增量
-
-### 42. 正文图 `![alt](src)` 自动转 `<figure>` + figcaption + lightbox
-
-`plugins/remark-figure.mjs` 检测「段落只含一个 image + alt 非空」→ 改 mdast paragraph 的 `hName: 'figure'` + 加 figcaption 子节点。保留原 image 让 Astro 继续走 Image 优化（webp/lazy load）。
-
-**触发条件**（必须**全部**满足才转）：
-1. 该 paragraph 只有 1 个 child
-2. child.type === 'image'
-3. image.alt 非空（trim 后）
-
-不满足时保留 inline 渲染（不破坏 markdown 内夹小图）。
-
-**lightbox 渲染**（[BlogPost.astro](src/layouts/BlogPost.astro) 末尾 inline script）：仿 macOS 预览——右侧浮动工具栏（放大/缩小/100% label/适应/关闭）+ 双击 toggle 100%↔250% + 滚轮按光标位置缩放 + zoom>1× 时拖拽平移。三件套（backdrop / figure clone / toolbar）独立 portal 到 body，绕开 §40b 的 stacking trap。
-
-### 43. 代码块 macOS 窗口风（纯 CSS + JS portal 放大）
-
-shiki 输出 `<pre class="astro-code" data-language="xxx">`。叠加层视觉：
-- 36px 灰色 header bar（`inset 0 36px 0 #ecedef` box-shadow，覆盖 shiki 的 inline background）
-- 左侧 3 个圆点（单 `::before` + box-shadow 复刻另外两个，14px 间距）
-- header 中间 lang 标签（`::after content: attr(data-language)`，flex 居中；plaintext/text 隐藏）
-- 右侧两个按钮 「放大」「复制」（JS 客户端注入，hover accent 蓝高亮）
-- 放大按钮走 §40b 的 portal 模式：CSS 选择器**不带 `.prose` 前缀**（pre 被 portal 后不在 .prose 内）
-- 复制按钮 `navigator.clipboard.writeText(code.innerText)` + ✓ 反馈 1.4s
-
-shiki theme：必须改成 `github-light`（`astro.config.mjs` 的 `markdown.shikiConfig`），默认 `github-dark` 在玻璃白底反差差。
-
-**致命架构坑：absolute 装饰 + 横向滚动必须分层** —— 之前 `pre.astro-code` 同时承担「装饰锚点」和「滚动容器」两个角色，导致窄屏代码块横向滚动时**3 圆点 / lang 标签 / 「放大-复制」按钮一起被滚走**。
-
-CSS 规范：`position: absolute` 元素的定位上下文是**滚动内容的 padding box**，不是可视窗口。容器滚多远，绝对定位子元素就跟着漂多远——只有 `box-shadow inset`（容器自身绘制的背景）才纹丝不动，所以视觉上看起来「灰条还在，但按钮没了」。
-
-**修法**（已应用到 [global.css](src/styles/global.css)）：把滚动从外层下放到内层，pre 做不动的装饰外壳，code 做真正滚动的内容区：
+相同特异性按源序后写赢。想覆盖通用规则必须显式提高一档：
 
 ```css
-pre.astro-code {
-  position: relative;
-  overflow: hidden;            /* 外壳不滚 → 绝对装饰永远在角落 */
-  box-shadow: inset 0 36px 0 #ecedef, ...;
-}
-pre.astro-code > code {
-  display: block;              /* 关键：code 默认 inline，必须改 block */
-  overflow-x: auto;            /* 滚动只在内层发生 */
-  padding-bottom: 2px;         /* 滚动条紧贴底边 */
-}
+nav a:hover { color: var(--accent); }
+nav h2 a:hover { color: var(--black); }   /* (0,1,2) 胜 (0,1,1) */
 ```
 
-注入 `.code-actions` 的 JS 必须保持 `pre.insertBefore(actions, pre.firstChild)`——是 pre 的直接子级（与 code 平级），不要 append 到 code 内。
+### 6. `align-items: center` 父 + 内部高列表
 
-**通用规则**：任何「装饰条 + 横向滚动内容」组合（macOS 窗口风代码块、左固定首列的横向表格、时间轴 ticker），都要做这种「外壳/内容」分层。**滚动容器不当装饰锚点**，是写这类组件的第一条戒律。
+列表会被居中导致 translateY 数学错乱。必须用内层 `.window` 包裹 + `position: absolute` 列表，绝对定位不受 align-items 影响。
 
-### 44. TOC 卡尺寸：JS 接管 `height`，CSS 不要留 `max-height` fallback
+### 7. CSS max-height vs JS height
 
-TOC fixed 侧栏的高度跟 viewport + header 状态联动：
-- `top = max(stickyTop, hero.bottom + 20)`；header 现身 stickyTop=80，隐藏 stickyTop=8
-- `bottomGap = header-hidden ? 8 : 20`
-- JS 设 `desktop.style.height = vh - top - bottomGap`
+JS 接管尺寸时**删掉 CSS 的 max-height fallback**——viewport 小时 CSS max 会赢，JS 失效。
 
-**踩过的坑**：CSS 里残留 `max-height: calc(100vh - 100px)` 当 SSR fallback。viewport < 1080 时 max-height 比 JS 想要的小，**max-height 会赢**，TOC 卡撑不到 viewport 底（用户反复反馈「底部留白」）。修法：JS 完全接管尺寸时**删掉 CSS 的 max-height**，不留兜底。
+### 8. shiki 主题
 
-**展开过渡视觉**：`top > stickyTop`（hero 还在屏幕里）时给 `.toc-desktop.is-collapsed`，CSS 让底部三件套（上下篇 / footer / 进度条）`opacity:0 + translateY(8px) + pointer-events:none`。hero 完全滚出 → class 移除 → 0.22s 淡入。视觉上「TOC 从 hero 下方向下生长，完全展开才解锁底部按钮」。
+`astro.config.mjs` 必须设 `markdown.shikiConfig.theme: 'github-light'`。默认 `github-dark` 在玻璃白底反差太大。
 
-### 45. 供应链否决案例：`@antv/infographic`
+## 组件设计规范
 
-2026-05-19 尝试集成失败案例归档：
-- 包含 498KB obfuscated `index.js`
-- `preinstall: bun run index.js` lifecycle 强制 bun runtime
-- 内含 `createHash / pbkdf2Sync / randomBytes` + 27 处 `fetch` + 5 处 `http` + 多处 `fs.*`
-- CI runner 没装 bun → install 直接 exit 127 → 部署红
-- 即使加 bun 到 CI，也是在 prod 跑一段看不懂的网络代码
+### 命名与组织
 
-**回滚成本**：4 个 commit 一次性 revert + npm uninstall + 清 plugin / templates / designs / 5 skills / demo post / CLAUDE §40-41 旧文。
+- 组件：PascalCase（`HeroImage.astro`）
+- 工具脚本：kebab-case（`crop-hero.mjs`）
+- CSS 类：kebab-case，用 `is-*` 前缀表状态（`is-collapsed` / `is-hidden`）
+- 跨组件协调用 body class（`has-toc` / `header-hidden` / `drawer-open`），不用全局事件
 
-**替代**：Mermaid（社区透明 + 无 install hook + 客户端 lazy load）。
+### 客户端 JS 守则
 
-教训沉淀进 §40「供应链审查 checklist」，下次装包 mandatory 走一遍。
+- 所有 scroll 监听必须 `requestAnimationFrame` 节流，不用 `setTimeout` / `debounce`
+- 拖拽 / 缩放等高频事件用 `transform` 跟随，不改 `top` / `left`
+- 长动画必须有 `prefers-reduced-motion` 守卫
+- 触屏检测后跳过 hover-only 效果（拖尾、tilt、wiggle）
 
-## 写新博文
+### Astro inline script 规范
+
+- 用 `<script is:inline>` 加载客户端独占代码（pagefind / mermaid lazy import）
+- 必须包 `DOMContentLoaded` 守护
+- 监听 `astro:page-load` 处理 SPA 式跳转（如启用 View Transitions）
+
+### 抽屉 / 浮层四件套
+
+任何可关闭浮层（drawer、search overlay、lightbox）必须支持：
+
+1. × 按钮关闭
+2. backdrop 点击关闭
+3. `ESC` 关闭
+4. 内部 `<a>` 点击关闭（drawer）/ 工具栏关闭按钮（lightbox）
+
+a11y 三件套必备：`aria-expanded` / `aria-hidden` / `aria-controls`。开启时给 body 加 `drawer-open` 类锁滚动。
+
+## 内容写作规范
+
+### Frontmatter
+
+最小字段（schema 见 [src/content.config.ts](src/content.config.ts)）：
+
+```yaml
+title: '...'
+description: '...'             # 30 字内
+pubDate: 'May 14 2026'         # 英文日期格式
+category: '项目分享'             # 5 选 1：项目分享/技术笔记/学习总结/生活随笔/碎碎念
+tags: ['标签1', '标签2']
+featured: true                 # 可选，置顶
+heroImage: '../../assets/blog/<slug>.jpg'  # 可选
+updatedDate: 'May 14 2026'     # 可选
+```
+
+### Markdown 扩展
+
+| 语法 | 用途 |
+|------|------|
+| `:::info / :::tip / :::warning / :::danger` | 四色 callout |
+| `:::spoiler` | 剧透块，默认隐藏 |
+| `:::fold[标题]` | 折叠块（原生 `<details>`） |
+| ` ```mermaid ` | 客户端渲染图表（lang 必须是 `mermaid`） |
+| `![alt](src)` 独占一段且 alt 非空 | 自动转 `<figure>` + figcaption + lightbox |
+| 一行只有一个裸 URL | 自动转 OG 链接卡（数据源 `og-cache.json`） |
+
+### Hero 图
+
+- 横版源图 + alt 非空 → 拖到 `src/assets/blog/<slug>.jpg`
+- 竖版人像源图 → 先跑 `node scripts/crop-hero.mjs`（数组内编辑文件列表）预裁为脸居中横版
+- prebuild 自动重生 `lqip.json`，无需手动跑
+- **不要**用 `position="top"` 或 `position="attention"`——前者切头，后者被装饰物吸引跳过脸
+
+### 二次元图片源
+
+- **Safebooru** 是主力（JSON API：`https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=...&json=1`）
+- 黄金 tag 组合：`1girl + solo + upper_body + looking_at_viewer + smile`
+- 必加排除：`-from_behind -from_side -1boy -character_name -sample_watermark -comic -happy_birthday`
+- **下载后必须用 Read 工具实际看一眼**——LLM 基于 tag 推断常常出错（侧脸 / 背影 / 水印）
+
+### 文案语言
+
+- **审美**：二次元/anime 风，米哈游系（崩坏3 / 原神）水彩透亮系。**拒绝写实摄影、拒绝过度严肃的设计**
+- **人物图必须露脸**，不接受侧脸 / 背影 / 水印图
+- **「休闲」优先**，避免商务 / 严肃 / 工作场景
+- 中文为主；代码注释 / PR title / 英文场景写英文
+- UI 文案套人格招牌句式（如「如你所见」「悄悄告诉你哦」「不是吗？」+ 自然意象）
+
+## 供应链审查
+
+**装任何新 npm 包前必跑清单**：
+
+```bash
+grep -E 'preinstall|postinstall' node_modules/<pkg>/package.json
+```
+
+否决条件（满足任一直接 reject）：
+1. install hook 脚本 ≥ 50 行且看不懂内容
+2. obfuscated 代码（变量名形如 `_0x1234`，单文件几百 KB）
+3. 强制非主流 runtime（bun-only / deno-only）
+4. install hook 内出现 `crypto` + `fetch` 组合（大概率 phone-home）
+5. 包大小与功能严重不匹配
+
+需要某个被拒包的能力 → clone 源码自己 build，绕开 npm 分发版的 install hook。
+
+## 工作流
+
+### 新博文（三入口）
 
 ```powershell
+# A. CLI 菜单（推荐——可顺手备份/还原）
+npm run cli
+
+# B. 仅 scaffold
 npm run new
-# 交互式 prompt：标题 / slug（默认 slugify 后的 ASCII）/ 分类 / 标签 / 置顶 / 描述
-# 输出 src/content/blog/<slug>.md，含完整 frontmatter + 注释掉的 heroImage 行
 
-# 加 hero 图：拖到 src/assets/blog/<slug>.jpg，取消 frontmatter 里 heroImage 注释
-# prebuild 会自动重生 lqip.json，不用手动跑 gen-lqip
-
-git push   # 触发 GitHub Actions，~40s 部署
+# C. 浏览器写作
+npm run cms          # 端口 4322，首次自动 npm install cms/
 ```
 
-**Markdown 扩展**（[plugins/remark-shoka-directives.mjs](plugins/remark-shoka-directives.mjs)）：
+后续：加 hero 图 → `git push` → 等 GitHub Actions ~40s。
 
-````markdown
-:::info / :::tip / :::warning / :::danger
-四色 callout，渲染为 <aside class="callout callout-{name}">
-:::
-
-:::spoiler
-剧透块，默认隐藏；click / hover / Enter / Space 解锁
-:::
-
-:::fold[标题]
-折叠块，原生 <details>，无 JS。标题可省略默认「展开」。
-:::
-````
-
-## 写新友链 + OG 缓存刷新
+### 友链 + OG 缓存
 
 ```powershell
-# 1. 编辑 src/data/friends.json，加一条：
-#   { "name": "...", "url": "https://...", "description": "...", "accent": "#hex" }
-#   accent 可选（不填用默认彩色斜渐变）；avatar 可选 manual override
+# 1. 编辑 src/data/friends.json：
+#    { "name": "...", "url": "https://...", "description": "...", "accent": "#hex" }
 
-# 2. 抓 OG 元数据到本地缓存：
-npm run refresh-og        # 增量：只抓未缓存或 failed 的 URL
-npm run refresh-og --force  # 全量重抓
+# 2. 抓 OG meta
+npm run refresh-og           # 增量：仅未缓存或 failed
+npm run refresh-og --force   # 全量重抓
 
-# 3. review src/data/og-cache.json 的 diff，确认 image/title 合理
-
-# 4. friends.json + og-cache.json 一起 commit，git push
+# 3. 一起 commit friends.json + og-cache.json
 ```
 
-**约束**：
-- `refresh-og` **不**链入 prebuild —— CI 不上网，build 永不被网络波动阻塞
-- 加新友链后**必须本地跑过** `refresh-og` 再 push，否则线上回退到首字母 tile
-- OG 抓不到时（status: failed），降级到字母 tile，不会断图
+约束：
+- `refresh-og` **不**链入 prebuild——CI 不上网，build 永不被网络波动阻塞
+- 加新友链后**必须本地跑过** `refresh-og` 再 push
+- OG 抓不到 → fallback 字母 tile，不会断图
 
-**渲染优先级**（[friends.astro `pickThumb`](src/pages/friends.astro)）：
-`friend.avatar` → `og-cache[url].image`（thumb-top 卡）→ `og-cache[url].favicon`（圆头像）→ 首字母 tile
+### 备份还原
 
-## 部署 / 环境
+`npm run cli` 走入。两种粒度：
 
-- **Astro 6 要求 Node 22+**，CI 必须显式 `node-version: 22`（不是 20）
-- Windows + PowerShell：首次需 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
-- `npm create astro` 在 PowerShell 下 `--` 参数传递有坑——直接用 `npx --yes create-astro@latest <name> --template blog --install --git --typescript strict`
-- 仓库名 **必须** 是 `<username>.github.io` 才能挂主域名
-- GitHub Pages source 切到 Actions：`gh api -X PUT /repos/<user>/<repo>/pages -f build_type=workflow`
-- 部署时间约 30-50s
+| 模式 | 内容 | 体积 |
+|------|------|------|
+| **标准** | `src/content/blog` + `src/data` + 几个 config 文件 + CLAUDE.md + package.json | KB 级 |
+| **完整** | 标准 + `src/assets/blog` + `bg.jpg` + `elysia.png` + `public/memories` | MB 级 |
+
+实现约束（见 [scripts/lib/backup.mjs](scripts/lib/backup.mjs)）：
+- tar.gz 包内嵌 `.backup-manifest-<ts>.json`，还原前可 dry-read
+- **还原前必做路径安全校验**：拒绝 `..` / 绝对路径 / null byte（防 zip-slip）
+- 修 `BACKUP_ITEMS` 时不许绕开 `validateEntries`
+- 默认推荐「先备份当前状态再还原」分支
+
+### 本地 CMS 安全
+
+- 端口 **4322**（避开 Astro dev 的 4321）
+- 只绑 `127.0.0.1` + Host 头白名单（`localhost / 127.0.0.1 / [::1]`），外网穿透到 4322 也直接 403
+- 完全本地工具，部署 dist/ 不含 cms 代码
+
+### 部署
+
+- 推送到 `main` → GitHub Actions → Ubuntu runner 跑 `npm install` + `npm run build` + pagefind 索引 → 上传 dist/ → 发布 wizardhehejun.github.io
+- 约 40-50 秒完成
+- Node 22+ 必须显式指定（不是 20）
 
 ## 关键文件速查
 
 | 文件 | 作用 |
 |------|------|
-| `src/consts.ts` | 站点标题、描述 |
-| `astro.config.mjs` | site URL、integrations |
+| `src/consts.ts` | 站点常量 + giscus 配置 |
+| `astro.config.mjs` | site URL + integrations + shared remarkPlugins |
 | `src/content.config.ts` | 博文 collection schema |
-| `src/styles/global.css` | 玻璃主题、背景图、字体 |
-| `src/components/BaseHead.astro` | meta、字体 CDN、favicon |
-| `src/components/Header.astro` | 顶部导航、博客 ▾ dropdown、🔍 搜索按钮（SVG）、社交链接（SVG 40px 圆按钮）、**移动端 ☰ 抽屉**、**最近文章 ticker（≤640）**、**自动隐藏（下滑藏 / 上滑现 + body.header-hidden）** |
-| `src/components/TableOfContents.astro` | 文章页 TOC——**桌面左侧贴边 fixed 栏 + 移动 header 浮替代 ticker + 右下角 FAB**；客户端 DOM 扫 `.prose h2/h3`、scroll-spy、transform 平滑跟随 hero |
-| `src/components/Footer.astro` | 全宽底部条 + 挂载所有全局组件（BgLayer / BgScrollSync / SearchOverlay / CursorTrail / MusicPlayer） |
-| `src/components/BgLayer.astro` | **独立背景层**（必须独立，避免 backdrop-filter 冻结） |
-| `src/components/BgScrollSync.astro` | scroll → `--bg-y` 同步脚本 |
+| `src/styles/global.css` | 玻璃变量、字体、颜色、共享 keyframes |
+| `src/components/BaseHead.astro` | meta + 字体 CDN + favicon |
+| `src/components/Header.astro` | 顶部导航 + 抽屉 + ticker + 自动隐藏 |
+| `src/components/Footer.astro` | 底部 + 全局组件挂载点 |
+| `src/components/BgLayer.astro` | 独立背景层（必须独立，避开 backdrop-filter 冻结） |
+| `src/components/BgScrollSync.astro` | scroll → `--bg-y` 同步 |
+| `src/components/TableOfContents.astro` | 文章 TOC（桌面侧栏 / 移动浮 header / FAB） |
 | `src/components/SearchOverlay.astro` | 搜索浮窗（Pagefind JS API） |
-| `src/components/CursorTrail.astro` | 鼠标拖尾（几何菱形 + 三角混搭、节流 + 触屏检测） |
-| `src/components/MusicPlayer.astro` | APlayer + MetingJS 音乐播放器 |
-| `src/components/Sidebar.astro` | 博客列表左侧栏（Profile / Stats / 最近文章） |
-| `src/components/Pagination.astro` | 分页器组件 |
-| `src/layouts/BlogPost.astro` | 文章布局、glass `.prose` 卡片 |
-| `src/pages/index.astro` | 首页（hero 打字机 + 最近文章 + Now 区） |
-| `src/pages/about.astro` | 关于页（6 sections 玻璃卡） |
-| `src/pages/404.astro` | 戏剧版 404（4 [Elysia] 4） |
-| `src/pages/blog/[...page].astro` | 博客列表（分页 + sidebar） |
-| `src/pages/blog/[...slug].astro` | 单篇文章 |
-| `src/pages/categories/{index,[category]}.astro` | 分类总览 + 单分类 |
-| `src/pages/tags/{index,[tag]}.astro` | 标签云 + 单标签 |
+| `src/components/CursorTrail.astro` | 鼠标拖尾 |
+| `src/components/MusicPlayer.astro` | APlayer + MetingJS |
+| `src/components/Sidebar.astro` | 博客列表左侧栏 |
+| `src/components/HeroImage.astro` | LQIP + Astro Image 包装 |
+| `src/components/Comments.astro` | giscus 评论 |
+| `src/layouts/BlogPost.astro` | 文章布局 + mermaid / lightbox / 代码块 portal |
+| `src/pages/index.astro` | 首页 |
+| `src/pages/about.astro` | 关于页 |
+| `src/pages/404.astro` | 戏剧版 404 |
 | `src/pages/friends.astro` | 友链 |
-| `src/pages/memories.astro` | **回忆相册**（JSON 数据驱动，日期倒序，每张卡 图 + 日期 + 标题 + 可选描述） |
-| `src/pages/whiteboard.astro` | **画板**（HTML5 Canvas + 颜色/粗细/橡皮/清空、PointerEvents 统一鼠标+触屏+触控笔、DPR 自适应、resize 保留笔迹、自定义主题化 confirm modal） |
-| `src/pages/search.astro` | 搜索 fallback 页（主入口已改 overlay） |
-| `src/components/Comments.astro` | **giscus 评论组件**（mapping/term/title/hint props、dev 回退 light、生产 custom theme URL + 时间戳 cache buster） |
-| `src/components/HeroImage.astro` | **hero 图 LQIP 包装**（外 div 内嵌 base64 模糊占位 + Astro Image 淡入；scoped CSS 跨组件失效用 `:global()` 兜底） |
-| `src/data/friends.json` | 友链数据：`[{ name, url, description?, avatar?, accent? }]` |
-| `src/data/og-cache.json` | **OG 元数据缓存**（commit 进 git，避免 CI 联网；schema 见 refresh-og.mjs） |
-| `src/data/lqip.json` | **LQIP 占位图**（base64 + dominant color，每篇 hero 图一条；prebuild 自动重生） |
-| `src/data/memories.json` | 回忆数据（`[{ image, date, title, description? }]`，图片放 `public/memories/`） |
-| `plugins/remark-shoka-directives.mjs` | **Shoka markdown directive transformer**（`:::info/tip/warning/danger/spoiler/fold` → hast HTML） |
-| `plugins/remark-mermaid.mjs` | ```mermaid 块包成 `<pre class="mermaid">`，BlogPost.astro 末尾 inline script lazy load mermaid.js（详见 §41） |
-| `plugins/remark-figure.mjs` | `![alt](src)` 段落转 `<figure>` + figcaption（详见 §42） |
-| `src/utils/reading-time.ts` | 中文友好的字数 + 阅读时长 |
-| `src/content/blog/*.md` | 博文 |
-| `src/assets/bg.jpg` | 全屏背景图（Vite 打包）|
-| `src/assets/elysia.png` | favicon 源图 |
-| `src/assets/blog/*.jpg` | 博文 hero 图（Astro Image 处理）|
-| `scripts/gen-favicon.mjs` | 从 elysia.png 生成 4 个尺寸 favicon |
-| `scripts/crop-hero.mjs` | 预裁竖版人像图为横版面孔居中 |
-| `scripts/gen-lqip.mjs` | 扫 `src/assets/blog/*.jpg` 生成 LQIP base64 + dominant 色（prebuild 自动跑） |
-| `scripts/new-post.mjs` | 交互式新建博文 CLI（npm run new） |
-| `scripts/refresh-og.mjs` | 抓 friends.json URL 的 OG meta 到 og-cache.json（手动跑 npm run refresh-og） |
-| `plugins/remark-mermaid.mjs` | ```mermaid 代码块包成 `<pre class="mermaid">`（客户端渲染，详见 §41） |
-| `public/favicon-*.png` | 生成的 favicon 输出 |
-| `public/giscus-theme.css` | **giscus 自定义主题**（透明面板 + 玻璃输入框 + 粉色按钮 + sort tabs 胶囊）|
-| `public/memories/` | 回忆图片目录（直接拖图进去，JSON 里引用 `/memories/<文件名>`）|
+| `src/pages/memories.astro` | 回忆相册 |
+| `src/pages/whiteboard.astro` | 画板 |
+| `src/pages/blog/[...page].astro` | 博客列表 |
+| `src/pages/blog/[...slug].astro` | 单篇文章 |
+| `src/data/friends.json` | 友链数据 |
+| `src/data/og-cache.json` | OG meta 缓存（commit 进 git） |
+| `src/data/lqip.json` | LQIP 占位（prebuild 自动重生） |
+| `src/data/memories.json` | 回忆数据 |
+| `plugins/remark-shoka-directives.mjs` | `:::info/tip/warning/danger/spoiler/fold` |
+| `plugins/remark-mermaid.mjs` | mermaid 代码块包装 |
+| `plugins/remark-figure.mjs` | 段落图转 figure + figcaption |
+| `plugins/remark-link-card.mjs` | 裸 URL 转 OG 链接卡 |
+| `scripts/blog-cli.mjs` | CLI 菜单（npm run cli） |
+| `scripts/new-post.mjs` | 新建博文 scaffold |
+| `scripts/run-cms.mjs` | 启动浏览器 CMS |
+| `scripts/refresh-og.mjs` | 抓 OG meta |
+| `scripts/gen-lqip.mjs` | LQIP 生成（prebuild 跑） |
+| `scripts/gen-favicon.mjs` | favicon 生成 |
+| `scripts/crop-hero.mjs` | 竖图预裁脸居中 |
+| `scripts/lib/backup.mjs` | 备份/还原核心 |
+| `cms/` | 本地浏览器 CMS 子项目 |
+| `backups/` | 本地备份目录（.gitignore） |
+| `public/giscus-theme.css` | giscus 自定义主题 |
+| `public/memories/` | 回忆图片目录 |
 | `.github/workflows/deploy.yml` | GitHub Actions 部署 |
 
-## 常用命令
+## 自定义入口速查
 
-```powershell
-npm run dev                          # 本地预览 http://localhost:4321/
-npm run build                        # 生产构建到 dist/（prebuild 自动重生 lqip.json）
-npm run new                          # 交互式新建博文（输出 src/content/blog/<slug>.md）
-npm run refresh-og                   # 抓 friends.json URL 的 OG meta（--force 全量重抓）
-node scripts/gen-favicon.mjs         # 重新生成 favicon
-node scripts/crop-hero.mjs           # 预裁 hero 图（数组在脚本里改）
-git push                             # 推送即触发部署
-gh run list --workflow "Deploy to GitHub Pages" --limit 1   # 查最新部署状态
-```
+| 想改什么 | 改哪里 |
+|----------|--------|
+| 站点标题/描述 | `src/consts.ts` |
+| giscus 仓库/分类 ID | `src/consts.ts` 的 `GISCUS` 常量 |
+| giscus 主题配色 | `public/giscus-theme.css` |
+| 玻璃透明度/边框/阴影 | `src/styles/global.css` 的 `:root` 里 `--glass-*` |
+| 滚动条颜色 | `src/styles/global.css` 搜 `#66CCFF` |
+| 头像 wiggle 强度 | `global.css` 的 `@keyframes avatar-wiggle` |
+| 背景图 | 替换 `src/assets/bg.jpg` |
+| favicon | 替换 `src/assets/elysia.png`，跑 `gen-favicon.mjs` |
+| 音乐歌单 | `src/components/MusicPlayer.astro` 的 `playlistId` |
+| 友链卡 accent fallback | `src/pages/friends.astro` 顶部 `pickThumb` |
+| Mermaid 主题色 | `src/layouts/BlogPost.astro` 末尾 `mermaid.initialize` |
+| 代码块 macOS 窗口配色 | `global.css` 的 `pre.astro-code` 段 |
+| Shoka callout 配色 | `global.css` 的 `.prose .callout-*` |
+| lightbox 工具栏 / 缩放范围 | `BlogPost.astro` 末尾 figure-lightbox 脚本 |
+| 鼠标拖尾参数 | `CursorTrail.astro`（colors / MAX / LIFE / throttle） |
+| Header 自动隐藏阈值 | `Header.astro` 的 `TOP_LOCK` / `THRESH` |
+| 首页打字机短句 | `src/pages/index.astro` 的 `typeLines` |
+| 首页 Now 区 | `src/pages/index.astro` 的 `.now-grid` 块 |
+| 关于页技术栈 | `src/pages/about.astro` 顶部 `featured` / `stack` |
 
-## 工作流约定
+## Development Checklist
 
-- 每次有 UI 改动 → 必须 `npm run build` 验证 → 再 commit + push
-- 等 GitHub Actions 部署完成（~40s）再告知用户「已上线」
-- 改动涉及视觉 → 提醒用户 **Ctrl+Shift+R** 强制刷新（默认刷新对图片/字体不奏效）
-- 不要主动添加 emoji 到代码或文档；用户 UI 上要可爱有 emoji 是 OK 的
-- 不要在 commit message 里加 `Co-Authored-By: Claude`，除非用户明确要
+### 开始前
+- [ ] 看现有代码有无相似 pattern 可复用
+- [ ] 装新包 → 跑供应链审查清单
+- [ ] 改 schema / 配置 → 备份当前状态（`npm run cli` → 备份）
 
-## 用户的 GitHub 信息
+### 实现中
+- [ ] CSS 用项目约定写法（min() / clamp() / minmax min() / transform）
+- [ ] 动画加 `prefers-reduced-motion` + 触屏守卫
+- [ ] scroll 监听 `requestAnimationFrame` 节流
+- [ ] 跨组件协调用 body class
+- [ ] 子组件渲染的元素 → 检查 page-scoped CSS 是否需 `:global()`
+- [ ] inline script 包 `DOMContentLoaded`
+- [ ] 浮层支持四种关闭路径 + a11y 三件套
 
-- 用户名：`WizardHeHeJun`（仓库名大小写敏感，URL 可大可小）
+### 提交前
+- [ ] `npm run build` 通过
+- [ ] 视觉改动本地浏览器实测（Chrome + 手机视口）
+- [ ] 改过 friends.json → 跑 `refresh-og` 并 commit cache
+- [ ] commit 不含 `Co-Authored-By: Claude`（除非要求）
+- [ ] CLAUDE.md 同步 README.md
+
+### Push 后
+- [ ] `gh run list` 看部署状态
+- [ ] 上线 → 通知用户强刷（Ctrl+Shift+R）
+
+## 用户 / GitHub 信息
+
+- 用户名：`WizardHeHeJun`（仓库名大小写敏感）
+- 仓库：`https://github.com/WizardHeHeJun/WizardHeHeJun.github.io`
 - 哔哩哔哩：https://space.bilibili.com/40752109
-- X (Twitter)：https://x.com/wizardhehejun
-- 这些链接已经写死在 Header.astro 和 Footer.astro 的 SVG `<a>` 里
+- X：https://x.com/wizardhehejun
+- 这些链接写死在 `Header.astro` / `Footer.astro` 的 SVG `<a>` 里
+
+## Resources
+
+### 官方文档
+- [Astro 6 Docs](https://docs.astro.build/) — Content Collections / Image / Integrations
+- [Pagefind](https://pagefind.app/) — 静态全文搜索
+- [giscus](https://giscus.app/) — GitHub Discussions 评论 + 主题配置器
+- [Mermaid](https://mermaid.js.org/) — 客户端图表
+- [remark-directive](https://github.com/remarkjs/remark-directive) — Shoka `:::` 语法基础
+- [LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai-Screen) — 字体
+- [Safebooru API](https://safebooru.org/index.php?page=help&topic=dapi) — 二次元图源
+- [APlayer](https://aplayer.js.org/) + [MetingJS](https://github.com/metowolf/MetingJS) — 音乐播放器
+- [sharp](https://sharp.pixelplumbing.com/) — 图片处理（hero 裁剪 + LQIP）
+
+### 灵感参考
+- [Shoka theme (Hexo)](https://github.com/amehime/hexo-theme-shoka) — markdown directive 风格来源
+- [astro-koharu](https://github.com/cosZone/astro-koharu) — 编码规范结构参考
+
+### 内部关键路径
+- 玻璃变量 / 颜色 / 共享 keyframes：[src/styles/global.css](src/styles/global.css)
+- 共享 remarkPlugins 注册：[astro.config.mjs](astro.config.mjs)
+- 博文 schema：[src/content.config.ts](src/content.config.ts)
+- 备份/还原核心：[scripts/lib/backup.mjs](scripts/lib/backup.mjs)
+- 本地 CMS 子项目：[cms/](cms/)
