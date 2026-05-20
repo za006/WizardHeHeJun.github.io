@@ -319,8 +319,7 @@ git push
 ## 📚 灵感来源
 
 - **[Hexo Shoka](https://shoka.lostyu.me/)** —— `:::callout` / `:::spoiler` / `:::fold` 等 directive 风格
-- **[astro-koharu](https://github.com/cosZone/astro-koharu)** —— README 结构参考
-- **米哈游 / 崩坏 3** —— 二次元水彩玻璃风视觉语言
+- **[astro-koharu](https://github.com/cosZone/astro-koharu)** —— 项目结构参考
 
 ---
 
