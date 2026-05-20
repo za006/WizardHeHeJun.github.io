@@ -1,194 +1,262 @@
 # WizardHeHeJun's Notes
 
-个人博客源码——记录项目分享、技术笔记和碎碎念。
+> 个人博客源码 —— 项目分享 / 技术笔记 / 学习总结 / 生活随笔 / 碎碎念。
+> 二次元系玻璃风，零后端，推送即发布。
 
-🌐 线上地址：[wizardhehejun.github.io](https://wizardhehejun.github.io/)
-
-完整搭建过程见博文：[我用 Astro + GitHub Pages 搭了这个博客](https://wizardhehejun.github.io/blog/building-this-blog/)
+- 🌐 **线上**：[wizardhehejun.github.io](https://wizardhehejun.github.io/)
+- 📝 **从零搭建过程**：[我用 Astro + GitHub Pages 搭了这个博客](https://wizardhehejun.github.io/blog/building-this-blog/)
 
 ---
 
-## 技术栈
+## 🌸 主要特色
 
-- **[Astro 6](https://astro.build/)** —— 静态站点生成器
-- **GitHub Pages** —— 免费托管
-- **GitHub Actions** —— 推送即自动部署
-- **Markdown / MDX** —— 写作格式
-- **[Pagefind](https://pagefind.app/)** —— 静态全文搜索
-- **[giscus](https://giscus.app/)** —— 基于 GitHub Discussions 的评论 + 表情反应（自定义玻璃主题）
-- **[APlayer](https://aplayer.js.org/) + [MetingJS](https://github.com/metowolf/MetingJS)** —— 音乐播放器
-- **[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai-Screen)** —— 手写感中文字体（jsDelivr CDN）
-- **[remark-directive](https://github.com/remarkjs/remark-directive)** —— Shoka 风 `:::callout / :::spoiler / :::fold` 扩展语法
-- **[mermaid](https://mermaid.js.org/)** —— 客户端 lazy load 渲染流程图 / 时序图 / 思维导图
+### 内容能力
 
-## 项目结构
+- 📝 **Shoka 风 Markdown 扩展** —— `:::info / :::tip / :::warning / :::danger / :::spoiler / :::fold[标题]` 六种 directive，融入玻璃风
+- 📊 **Mermaid 客户端 lazy load** —— 含 ` ```mermaid ` 代码块的页面才加载主包，flowchart / sequence / mindmap / quadrant 都支持
+- 💻 **代码块 macOS 窗口风** —— shiki 上叠加灰色 header + 红黄绿 3 圆点 + lang 标签 + 放大 / 复制按钮（fullscreen portal 到 body 避开 stacking trap）
+- 🖼️ **正文图自动 figure + 智能放大** —— `![alt](src)` 自动转 `<figure>` + figcaption；点击打开仿 macOS 预览的 lightbox（滚轮按光标位置缩放 + 拖拽平移 + 双击 toggle）
+- 🔗 **裸 URL 自动转 OG 链接卡** —— 构建时从 `og-cache.json` 读元数据，CI 不上网
+- 🔍 **Pagefind 静态全文搜索** —— 浮窗 flex 居中（大屏阶梯加宽 560/640/740px），按 `/` 全局打开
+- 💬 **giscus 评论 + 表情反应** —— 基于 GitHub Discussions，自定义玻璃水色主题，博文 / 关于 / 友链三处接入
 
-```text
-my-blog/
-├── public/                          # 静态资源（直接拷到根路径）
-│   ├── favicon-{16,32,192}.png      # 多尺寸浏览器图标
-│   ├── apple-touch-icon.png         # iOS 主屏图标
-│   ├── giscus-theme.css             # giscus 自定义玻璃主题（生产环境用，dev 回退 light）
-│   └── memories/                    # 回忆相册图片目录（拖图进去即可）
-├── src/
-│   ├── assets/                      # 项目源资源（Vite 打包，自动加 hash）
-│   │   ├── elysia.png               # favicon 源图
-│   │   ├── bg.jpg                   # 全屏背景图
-│   │   ├── fonts/                   # 旧 Atkinson 字体（已弃用，未删）
-│   │   ├── blog/                    # 博文 hero 图（按 slug 命名）
-│   │   └── blog-placeholder-*.jpg   # 模板自带占位图
-│   ├── components/                  # 可复用组件
-│   │   ├── BaseHead.astro           # <head> 通用元数据 + LXGW 字体 CDN
-│   │   ├── Header.astro             # 顶部导航（带 SVG 图标 + 粉色胶囊 active）+ 移动端 ☰ 抽屉 + 最近文章 ticker（≤640 嵌入 nav 的胶囊滚动）
-│   │   ├── Footer.astro             # 全宽底部条 + 挂载所有全局组件
-│   │   ├── HeaderLink.astro         # 导航链接组件
-│   │   ├── FormattedDate.astro      # 中文日期格式化
-│   │   ├── Comments.astro           # giscus 评论组件（mapping/term props，dev 回退 light，生产用自定义主题 + cache buster）
-│   │   ├── Sidebar.astro            # 博客列表的左侧栏（Profile/Stats/最近文章，头像带 hover wiggle）
-│   │   ├── Pagination.astro         # 分页器（数字 + 上下页）
-│   │   ├── BgLayer.astro            # 独立背景层（绕开 backdrop-filter 冻结 bug）
-│   │   ├── BgScrollSync.astro       # JS 把 scroll 进度同步到 --bg-y CSS 变量
-│   │   ├── CursorTrail.astro        # 鼠标拖尾（菱形 + 三角混搭，节流 45fps，跳过触屏）
-│   │   ├── SearchOverlay.astro      # 搜索浮窗（Pagefind JS API + 自定义 UI，flex 居中）
-│   │   ├── TableOfContents.astro    # 文章 TOC（DOM 扫描 h2/h3 + 桌面左侧栏 + 移动浮 header + 阅读进度环 + FAB）
-│   │   └── MusicPlayer.astro        # APlayer + MetingJS 右下角音乐播放器
-│   ├── content/
-│   │   └── blog/                    # ⭐ 写新文章的地方（.md / .mdx）
-│   ├── content.config.ts            # 博文 collection schema（含 category / tags / featured）
-│   ├── layouts/
-│   │   └── BlogPost.astro           # 文章页布局（hero 图 + 玻璃 prose 卡）
-│   ├── pages/                       # 路由页面
-│   │   ├── index.astro              # 首页（hero 打字机 + 头像 wiggle + 最近文章 3×2 + Now 区）
-│   │   ├── about.astro              # 关于页（6 sections 玻璃卡 + giscus 评论）
-│   │   ├── 404.astro                # 戏剧版 404（4 [Elysia] 4 + 浮动动画）
-│   │   ├── friends.astro            # 友链页（数据来自 src/data/friends.json + giscus 评论申请入口）
-│   │   ├── memories.astro           # 🆕 回忆相册（按日期倒序卡片网格，图片放 public/memories/）
-│   │   ├── whiteboard.astro         # 🆕 画板（HTML5 canvas + 颜色/粗细/橡皮/清空 + 主题化 confirm modal）
-│   │   ├── search.astro             # 搜索页（fallback，主入口已改 overlay）
-│   │   ├── rss.xml.js               # RSS 订阅
-│   │   ├── blog/
-│   │   │   ├── [...page].astro      # 博客列表（分页 + sidebar）
-│   │   │   └── [...slug].astro      # 单篇文章动态路由（含 giscus 评论）
-│   │   ├── categories/
-│   │   │   ├── index.astro          # 分类总览
-│   │   │   └── [category].astro     # 单分类下的文章列表
-│   │   └── tags/
-│   │       ├── index.astro          # 标签云
-│   │       └── [tag].astro          # 单标签下的文章列表
-│   ├── data/
-│   │   ├── friends.json             # 友链数据
-│   │   └── memories.json            # 🆕 回忆相册数据（[{ image, date, title, description? }]）
-│   ├── styles/
-│   │   └── global.css               # 全局样式（玻璃变量 + 字体 + 渐变 fallback）
-│   ├── utils/
-│   │   └── reading-time.ts          # 中文友好的字数 + 阅读时长计算
-│   └── consts.ts                    # 站点标题与描述
-├── scripts/
-│   ├── gen-favicon.mjs              # 从 src/assets/elysia.png 生成多尺寸 favicon
-│   └── crop-hero.mjs                # 预裁竖图为脸居中横版（Astro <Image> 默认 center 裁剪友好）
-├── .github/workflows/
-│   └── deploy.yml                   # GitHub Actions 自动部署（Node 22）
-├── CLAUDE.md                        # 项目惯例（供 AI 协作参考）
-└── astro.config.mjs                 # Astro 配置（site URL + Pagefind integration）
-```
+### 主题视觉
 
-## 主题特色
-
-- 🖼️ **Hero 图 LQIP** —— 32px base64 占位（含 dominant color）内联到 HTML，弱网下立即可见，全图加载完 0.4s 淡入；prebuild 自动重生
-- ✍️ **Shoka markdown 扩展** —— `:::info / :::tip / :::warning / :::danger / :::spoiler / :::fold[标题]` 6 种 directive，融入玻璃风，spoiler 可点击解锁
-- 📊 **Mermaid 客户端渲染** —— 写 ` ```mermaid ` 代码块即可画 flowchart/sequence/mindmap/quadrant 等；仅含 mermaid 块的页面才 lazy load 主包，零负担
-- 💻 **代码块 macOS 窗口风** —— shiki 上叠加 36px 灰色 header + 红黄绿 3 圆点 + lang 标签 + 右上角「放大」「复制」按钮（fullscreen portal 到 body 避开 stacking trap，复制带 ✓ 反馈）
-- 🖼️ **正文图 figure + 智能放大** —— `![alt](src)` 自动转 `<figure>` + figcaption；点击图打开仿 macOS 预览的 lightbox（右侧工具栏放大/缩小/100%/适应/关闭 + 双击 toggle + 滚轮按光标位置缩放 + 拖拽平移）
-- 📑 **TOC 大改造** —— 玻璃蒙版 + 上下篇切换按钮 + 阅读进度条（`#66ccff`）+ 卡高度跟随 header 状态动态扩展（header 隐藏时撑满 viewport 左侧） + 「未完全展开时隐藏底部按钮」过渡
-- 💧 **友链卡 per-friend accent** —— 每个 friend 可指定 `accent: '#hex'`，卡顶色块 + 名字色 + hover 发光全部从 accent 派生（color-mix 自动算明暗变体）；20° 3D tilt 跟随鼠标 + 头像 translateZ 凸起
-- 🌐 **OG 元数据缓存** —— `npm run refresh-og` 抓友链 URL 的 OG image/title/description/favicon 进 `src/data/og-cache.json`（commit 进 git，CI 不上网）；渲染分 thumb-top 卡 / 圆头像 / 字母 tile 三级 fallback
-- 🌊 **毛玻璃风** —— 半透明白卡片 + `backdrop-filter: blur(18px) saturate(180%)`
-- 🖼️ **滑块式视差背景** —— 独立 `bg-layer` div + JS 同步 scroll 进度，页头看图顶 / 页尾看图底
-- 📐 **响应式四档断点** —— 移动 ≤640 / 平板 641-960 / 桌面 961-1280 / 大屏 >1400（再宽到 1800 解锁博文列表 1680px / 画板 1680px）
-- 🍔 **移动端 ☰ 抽屉** —— ≤720 折叠汉堡菜单，含可展开二级（博客 → 分类/标签）+ 社交快捷（已删冗余 ×，留 4 种关闭路径）
-- 📰 **嵌入式 ticker** —— ≤640 nav 里挂胶囊状的最近文章自动滚动条（脉动小圆点 + 5s/项 + 无缝循环）
-- 📑 **文章 TOC 目录** —— 桌面 ≥1280 左侧贴边固定栏，含粉色「文章目录」胶囊 + 编号 + 主动态高亮 + 底部跳转按钮 + 渐变遮罩；移动端浮入 header（带**实时阅读进度环**）；窄屏右下角 FAB（回到顶部 / 滚到底部 / 折叠手柄）
-- 🎯 **Header 自动隐藏** —— 下滑藏 / 上滑现 / 贴顶 80px 内永远显示，body class 联动 TOC 等组件；移动端 header 加厚到 68px
-- 🃏 **横向交错卡片** —— 博文列表单列横向，奇偶图左/图右交错；置顶用 21:9 全宽大图差异化
-- 🎯 **卡片微动效** —— hover 配图一次性 wiggle + 卡片上抬 + "阅读全文 →" 滑入；active 0.985 下沉反馈
-- 💞 **头像 hover wiggle** —— 首页/关于/sidebar 三处头像鼠标悬停时一次性 0.6s 摆动（global keyframes 复用）
-- 💬 **giscus 评论 + 表情反应** —— 基于 GitHub Discussions，自定义玻璃水色主题，三处接入（博文/关于/友链），每次 build 自动 cache-bust
+- 🌊 **毛玻璃风** + **滑块式视差背景** —— 独立 `BgLayer` 组件，避开 `backdrop-filter` 冻结 bug
+- 🖼️ **Hero 图 LQIP** —— 32px base64 占位（含 dominant color）内联到 HTML，弱网立即可见，全图加载完 0.4s 淡入
+- 🃏 **博文卡奇偶交错横向布局** —— 单列横向，奇偶图左 / 图右；置顶用 21:9 全宽大图差异化
+- 🎯 **TOC 大改造** —— 玻璃蒙版 + 阅读进度条 + 桌面侧栏 / 移动浮 header 进度环 / 窄屏 FAB
+- 🎯 **Header 自动隐藏** —— 下滑藏 / 上滑现 / 贴顶 80px 内永远显示，body class 联动 TOC 等组件
+- 🍔 **移动端 ☰ 抽屉** —— 四种关闭路径 + 二级展开 + 嵌入式最近文章 ticker（脉动小圆点 + 无缝循环）
+- 💞 **微动效集** —— 头像 hover wiggle / 卡片 wiggle / 鼠标拖尾（菱形 + 三角混搭），自动跳过触屏 + reduced-motion
+- 💧 **友链卡 per-friend accent** —— 卡顶色块 + 名字色 + hover 发光全部从 `accent` 派生（color-mix 算明暗），20° 3D tilt 跟随鼠标
 - 🔤 **霞鹜文楷** —— LXGW WenKai Screen via jsDelivr CDN，按字符 chunk 拆分
-- 🇨🇳 **中文友好** —— `lang="zh-CN"`、中文日期、中文字数 + 阅读时长、正文宽度 ≤ 1100px（≥1800 大屏放宽）
-- 🔍 **Pagefind 搜索** —— 静态全文索引，浮窗 flex 居中（大屏阶梯加宽 560/640/740px），按 `/` 全局打开
-- 🎵 **音乐播放器** —— APlayer + MetingJS，固定右下角，可换网易云任意歌单
-- ✨ **鼠标拖尾** —— 空心几何菱形 + 三角形 3:1 混搭（粉/蓝/紫三色 + 描边 + 发光），自动跳过触屏 + 减少动画偏好
-- 📜 **自定义滚动条** —— 水蓝 `#66CCFF` 胶囊滑块（Firefox `scrollbar-color` + Webkit `::-webkit-scrollbar-thumb`）
-- 📷 **回忆相册** —— JSON 数据驱动的卡片网格，按日期倒序，图片放 `public/memories/`
-- 🎨 **画板** —— HTML5 Canvas 自由绘画，6 色板 + 自定义颜色 + 粗细滑块 + 橡皮 + 清空（主题化 confirm modal，不保存）
-- 📌 **置顶机制** —— frontmatter `featured: true`，列表暖色金边大卡
-- 🏷️ **分类 + 标签** —— 5 个枚举分类 + 自由标签，自动生成聚合页
-- 🔗 **社交** —— GitHub / 哔哩哔哩 / X / 邮箱，统一 48px 圆形玻璃按钮（深灰图标 + 粉色 hover 渐变）
+- 📜 **自定义滚动条** —— 水蓝 `#66CCFF` 胶囊滑块（Firefox + Webkit 双适配）
+- 📐 **响应式四档断点** —— 640 / 960 / 1280 / 1400（+ 1800 大屏解锁博文列表 1680px）
 
-## 写新文章
+### 独立页面
 
-```powershell
-# 1. 交互式 scaffold（推荐）
-npm run new      # 输入标题 / slug / 分类 / 标签 / 是否置顶 / 描述
-                 # 生成 src/content/blog/<slug>.md + 注释掉的 heroImage 行
+- 🏠 **首页** —— hero 打字机 + 头像 wiggle + 最近文章 3×2 网格 + Now 区
+- 🙋 **关于** —— 6 sections 玻璃卡 + giscus 评论
+- 🎭 **戏剧版 404** —— `4 [Elysia] 4` + 浮动动画
+- 👥 **友链** —— per-friend accent + OG 缓存 fallback（thumb-top 卡 / 圆头像 / 字母 tile 三级）
+- 📷 **回忆相册** —— JSON 数据驱动卡片网格，按日期倒序
+- 🎨 **画板** —— HTML5 Canvas 自由绘画（6 色板 + 自定义颜色 + 粗细滑块 + 橡皮 + 主题化 confirm modal）
+- 📌 **置顶 + 分类 + 标签** —— frontmatter `featured: true` 列表暖色金边大卡；5 个枚举分类 + 自由标签，自动聚合页
 
-# 2. 写正文。可用 Shoka markdown directives：
-#   :::info / :::tip / :::warning / :::danger  四色 callout
-#   :::spoiler                                 剧透块（默认隐藏）
-#   :::fold[标题]                              折叠块（原生 details）
-#   ```mermaid                                 流程图/时序图（客户端渲染）
-#   ![alt](src)                                自动转 figure + caption，点击放大
+### 工作流工具
 
-# 3. 加 hero 图：拖到 src/assets/blog/<slug>.jpg，取消 heroImage 注释。
-#    prebuild 自动重生 LQIP，无需手动跑 gen-lqip。
+- 🌸 **`bloom` CLI** —— 自家命令行入口（npm install 后 `npx bloom` 直接用），无参进交互菜单，带子命令直接跑：`bloom new` / `bloom cms` / `bloom refresh-og` / `bloom backup`...
+- 📝 **本地浏览器 CMS** —— `bloom cms` 启动，端口 4322，仅 `127.0.0.1` 绑定 + Host 头白名单
+- 🗃️ **备份 / 还原** —— `bloom backup` / `bloom restore`，tar.gz + 内嵌 manifest，标准（KB 级文本）/ 完整（含图片资产）双模式，路径安全校验防 zip-slip
+- 🎵 **音乐播放器** —— APlayer + MetingJS 网易云歌单，固定右下角
 
-# 4. 本地预览
-npm run dev      # http://localhost:4321/
+---
 
-# 5. 发布
-git add .
-git commit -m "post: 文章标题"
-git push         # 推送后约 40-50 秒自动部署上线
-```
-
-> 也可以手动建 .md。最小 frontmatter：
->
-> ```yaml
-> title: '...'
-> description: '...'         # 30 字内
-> pubDate: 'May 14 2026'     # 英文日期格式
-> category: '项目分享'        # 5 选 1：项目分享 / 技术笔记 / 学习总结 / 生活随笔 / 碎碎念
-> tags: ['标签1', '标签2']
-> featured: true             # 可选，置顶
-> heroImage: '../../assets/blog/<slug>.jpg'  # 可选
-> updatedDate: 'May 14 2026' # 可选，更新过显示「最后更新于」
-> ```
-
-## 常用命令
-
-| 命令 | 作用 |
-| :--- | :--- |
-| `npm install` | 安装依赖（首次或换电脑后用） |
-| `npm run dev` | 本地开发服务器 `localhost:4321` |
-| `npm run build` | 构建生产版本到 `./dist/`（prebuild 自动重生 LQIP） |
-| `npm run preview` | 本地预览构建产物 |
-| `npm run new` | **交互式新建博文 CLI**（prompt 标题/slug/分类/标签/置顶/描述） |
-| `npm run refresh-og` | 抓 `friends.json` URL 的 OG meta 到 `og-cache.json`（增量；`--force` 全量重抓） |
-| `node scripts/gen-favicon.mjs` | 重新生成 favicon（换头像后用） |
-| `node scripts/crop-hero.mjs` | 预裁竖版人像图为横版面孔居中 |
-
-## 部署机制
+## 🚀 部署机制
 
 推送到 `main` 分支后：
 
 1. GitHub Actions 触发 `Deploy to GitHub Pages` workflow
 2. Ubuntu runner 跑 `npm install` + `npm run build`（含 Pagefind 索引生成）
 3. `dist/` 上传为 Pages artifact
-4. 自动部署到 `wizardhehejun.github.io`
+4. 自动发布到 `wizardhehejun.github.io`
 
-无需手动操作，`git push` 即发布。**约 40-50 秒**完成。
+约 **40-50 秒**完成，`git push` 即发布。
 
-## 多设备协作
+```powershell
+git push                                                       # 推送即触发
+gh run list --workflow "Deploy to GitHub Pages" --limit 1      # 查最新状态
+```
+
+> 要求 Node ≥ 22.12（CI 也用 Node 22）。
+
+---
+
+## ⚡ 快速开始
+
+### 本地开发
+
+```powershell
+git clone https://github.com/WizardHeHeJun/WizardHeHeJun.github.io.git
+cd WizardHeHeJun.github.io
+npm install
+npm run dev      # http://localhost:4321/
+```
+
+### 写新博文（三入口）
+
+```powershell
+# A. 交互菜单（推荐 —— 可顺手备份 / 还原 / 刷 OG）
+npx bloom
+
+# B. 直接新建（菜单的「新建」也走它）
+npx bloom new    # 交互输入：标题 / slug / 分类 / 标签 / 置顶 / 描述
+                 # 生成 src/content/blog/<slug>.md（含注释掉的 heroImage 行）
+
+# C. 浏览器写作
+npx bloom cms    # 端口 4322，首次自动 npm install cms/
+```
+
+加 hero 图 → 拖到 `src/assets/blog/<slug>.jpg`，取消 heroImage 注释。
+prebuild 自动重生 `lqip.json`，无需手动跑。
+
+发布：
+
+```powershell
+git add .
+git commit -m "post: 文章标题"
+git push         # 约 40-50s 自动上线
+```
+
+### Frontmatter 速查
+
+最小字段（schema 见 [src/content.config.ts](src/content.config.ts)）：
+
+```yaml
+title: '...'
+description: '...'             # 30 字内
+pubDate: 'May 14 2026'         # 英文日期格式
+category: '项目分享'             # 5 选 1：项目分享/技术笔记/学习总结/生活随笔/碎碎念
+tags: ['标签1', '标签2']
+featured: true                 # 可选，置顶
+heroImage: '../../assets/blog/<slug>.jpg'  # 可选
+updatedDate: 'May 14 2026'     # 可选，更新过显示「最后更新于」
+```
+
+### Markdown 扩展速查
+
+| 语法 | 用途 |
+| :--- | :--- |
+| `:::info / :::tip / :::warning / :::danger` | 四色 callout |
+| `:::spoiler` | 剧透块（默认隐藏，点击解锁） |
+| `:::fold[标题]` | 折叠块（原生 `<details>`） |
+| ` ```mermaid ` | 客户端渲染图表（lang 必须是 `mermaid`） |
+| `![alt](src)` 独占一段且 alt 非空 | 自动转 `<figure>` + figcaption + lightbox |
+| 一行只有一个裸 URL | 自动转 OG 链接卡（数据源 `og-cache.json`） |
+
+---
+
+## 📦 技术栈
+
+- **[Astro 6](https://astro.build/)** —— 静态站点生成（要求 Node ≥ 22）
+- **GitHub Pages** + **GitHub Actions** —— 免费托管，推送即部署
+- **Markdown / MDX** —— `.md` 和 `.mdx` 共享同一份 `remarkPlugins`
+- **[Pagefind](https://pagefind.app/)** —— 静态全文搜索
+- **[giscus](https://giscus.app/)** —— GitHub Discussions 评论 + 表情反应（自定义玻璃主题）
+- **[Mermaid](https://mermaid.js.org/)** —— 客户端 lazy load 图表
+- **[remark-directive](https://github.com/remarkjs/remark-directive)** + 自家四个 remark 插件（shoka-directives / mermaid / figure / link-card）
+- **[APlayer](https://aplayer.js.org/) + [MetingJS](https://github.com/metowolf/MetingJS)** —— 网易云歌单
+- **[LXGW WenKai Screen](https://github.com/lxgw/LxgwWenKai-Screen)** —— 中文字体（jsDelivr CDN）
+- **[sharp](https://sharp.pixelplumbing.com/)** —— hero 裁剪 + LQIP 生成
+
+---
+
+## 📁 项目结构
+
+```text
+stardust/
+├── public/                          # 静态资源（直接拷到根路径）
+│   ├── favicon-{16,32,192}.png      # 多尺寸浏览器图标
+│   ├── apple-touch-icon.png         # iOS 主屏图标
+│   ├── giscus-theme.css             # giscus 自定义玻璃主题（生产用）
+│   └── memories/                    # 回忆相册图片（拖图进去即可）
+├── src/
+│   ├── assets/                      # Vite 打包资源（自动 hash）
+│   │   ├── bg.jpg                   # 全屏背景图
+│   │   ├── elysia.png               # favicon 源图
+│   │   └── blog/                    # 博文 hero 图（按 slug 命名）
+│   ├── components/                  # 可复用组件（Header / Footer / TOC / 评论 / 拖尾 / 音乐...）
+│   ├── content/blog/                # ⭐ 写新文章的地方（.md / .mdx）
+│   ├── content.config.ts            # 博文 collection schema
+│   ├── layouts/BlogPost.astro       # 文章布局 + mermaid / lightbox / 代码块 portal
+│   ├── pages/                       # 路由（index / about / 404 / friends / memories / whiteboard / blog / categories / tags）
+│   ├── data/
+│   │   ├── friends.json             # 友链数据
+│   │   ├── og-cache.json            # OG meta 缓存（commit 进 git）
+│   │   ├── lqip.json                # LQIP 占位（prebuild 自动重生）
+│   │   └── memories.json            # 回忆数据
+│   ├── styles/global.css            # 玻璃变量 / 字体 / 共享 keyframes
+│   ├── utils/reading-time.ts        # 中文友好字数 + 阅读时长
+│   └── consts.ts                    # 站点常量 + giscus 配置
+├── plugins/                         # remark 插件
+│   ├── remark-shoka-directives.mjs  # :::info/tip/warning/danger/spoiler/fold
+│   ├── remark-mermaid.mjs           # mermaid 代码块包装
+│   ├── remark-figure.mjs            # 段落图转 figure + figcaption
+│   └── remark-link-card.mjs         # 裸 URL 转 OG 链接卡
+├── scripts/
+│   ├── blog-cli.mjs                 # bloom CLI 入口（菜单 + 子命令分发，bin 注册名 = bloom）
+│   ├── new-post.mjs                 # 新建博文 scaffold（bloom new 委托）
+│   ├── run-cms.mjs                  # 启动浏览器 CMS（bloom cms 委托）
+│   ├── refresh-og.mjs               # 抓友链 + 博文裸 URL OG meta（bloom refresh-og 委托）
+│   ├── gen-lqip.mjs                 # LQIP 生成（prebuild 自动跑）
+│   ├── gen-favicon.mjs              # favicon 生成（换头像后用）
+│   ├── crop-hero.mjs                # 竖图预裁脸居中横版
+│   └── lib/backup.mjs               # 备份/还原核心（zip-slip 防护）
+├── cms/                             # 本地浏览器 CMS 子项目
+├── backups/                         # 本地备份目录（.gitignore）
+├── .github/workflows/deploy.yml     # GitHub Actions 部署（Node 22）
+├── CLAUDE.md                        # 项目编码规范
+└── astro.config.mjs                 # site URL + integrations + shared remarkPlugins
+```
+
+---
+
+## 🧰 常用命令
+
+### 标准 Astro / npm（任何 Astro 项目都长这样）
+
+```bash
+npm install         # 安装依赖（首次或换电脑后）
+npm run dev         # 本地开发 http://localhost:4321/
+npm run build       # 生产构建到 dist/（prebuild 自动重生 LQIP）
+npm run preview     # 本地预览构建产物
+```
+
+### 本项目自定义 CLI（`bloom`）
+
+`npm install` 之后 `npx bloom` 直接可用——bin 链接已自动建立在 `./node_modules/.bin/bloom`。
+
+```bash
+npx bloom                       # ⭐ 交互菜单：新建 / CMS / 刷 OG / 备份 / 还原 / 列表 / 清理
+npx bloom new                   # 直接新建博文
+npx bloom cms                   # 本地浏览器 CMS（端口 4322，仅 127.0.0.1）
+npx bloom refresh-og            # 抓 friends.json + 博文裸 URL 的 OG meta
+npx bloom refresh-og --force    # 全量重抓
+npx bloom backup                # 备份（交互选标准 / 完整）
+npx bloom restore               # 从备份还原（默认先备份当前状态）
+npx bloom list                  # 列出已有备份
+npx bloom clean                 # 清理旧备份
+npx bloom --help                # 子命令清单
+```
+
+### 资源工具（直接跑脚本，无 bloom 子命令包装）
+
+```bash
+node scripts/gen-favicon.mjs    # 换头像后重新生成 favicon
+node scripts/crop-hero.mjs      # 竖版人像图预裁为脸居中横版
+```
+
+---
+
+## 🗃️ 备份 / 还原
+
+`npx bloom backup` 直接走入（或 `npx bloom` 菜单选「备份」）。两种粒度：
+
+| 模式 | 内容 | 体积 |
+| :--- | :--- | :--- |
+| **标准** | `src/content/blog` + `src/data` + 几个 config 文件 + CLAUDE.md + package.json | KB 级 |
+| **完整** | 标准 + `src/assets/blog` + `bg.jpg` + `elysia.png` + `public/memories` | MB 级 |
+
+实现约束（见 [scripts/lib/backup.mjs](scripts/lib/backup.mjs)）：
+
+- tar.gz 包内嵌 `.backup-manifest-<ts>.json`，还原前可 dry-read
+- **还原前必做路径安全校验**：拒绝 `..` / 绝对路径 / null byte（防 zip-slip）
+- 默认推荐「先备份当前状态再还原」分支
+
+---
+
+## 🔄 多设备协作
 
 ```powershell
 # 新机器拉代码
@@ -196,72 +264,66 @@ git clone https://github.com/WizardHeHeJun/WizardHeHeJun.github.io.git
 cd WizardHeHeJun.github.io
 npm install
 
-# 写之前先拉一下
+# 写之前先拉
 git pull
 
 # 写完推上去
 git push
 ```
 
-## 自定义提示
+---
+
+## 🎛️ 自定义入口速查
+
+下面是改动频率最高的几处，按「想改什么」反查：
 
 | 想改什么 | 改哪里 |
-|---------|-------|
-| 站点标题/描述 | `src/consts.ts` |
-| **giscus 仓库 / 分类 / ID** | `src/consts.ts` 的 `GISCUS` 常量（4 个 ID 从 https://giscus.app 配置器拿） |
-| **giscus 主题配色** | `public/giscus-theme.css`（透明度、按钮渐变、tab 配色都在里面） |
-| 顶部导航/社交链接 | `src/components/Header.astro` + `src/components/Footer.astro` |
-| 玻璃透明度/边框/阴影 | `src/styles/global.css` 的 `:root` 里 `--glass-*` 变量 |
-| **滚动条颜色** | `src/styles/global.css` 里搜 `#66CCFF` |
-| **头像 wiggle 强度** | `src/styles/global.css` 的 `@keyframes avatar-wiggle`（旋转角度 / scale） |
-| 全屏背景图 | 替换 `src/assets/bg.jpg` 即可 |
-| favicon | 替换 `src/assets/elysia.png`，跑 `node scripts/gen-favicon.mjs` |
-| 音乐歌单 | `src/components/MusicPlayer.astro` 第 4 行的 `playlistId`（网易云歌单 ID） |
-| 友链 | `src/data/friends.json`（schema `{name, url, description?, avatar?, accent?}`），改完跑 `npm run refresh-og` |
-| **友链卡 tilt 力度 / 配色 fallback** | `src/pages/friends.astro` 顶部 `pickThumb` / CSS `--tilt-x/y` |
-| **Mermaid 主题配色** | `src/layouts/BlogPost.astro` 末尾 `mermaid.initialize({ themeVariables: ... })` |
-| **代码块 macOS 窗口配色** | `src/styles/global.css` 里 `pre.astro-code` 段（圆点色、header 灰条、lang 标签） |
-| **Shoka callout 配色** | `src/styles/global.css` 里 `.prose .callout-{info,tip,warning,danger}` |
-| **lightbox 工具栏** | `src/layouts/BlogPost.astro` 末尾 figure-lightbox 内联脚本（ICON SVG / scale 范围 0.25-6） |
-| **回忆相册** | `src/data/memories.json` + 图片丢 `public/memories/`（JSON 里引用 `/memories/<文件名>`） |
-| **画板色板/工具** | `src/pages/whiteboard.astro` 顶部的 `.swatches` HTML 块（6 色） |
-| 首页 Now 区内容 | `src/pages/index.astro` 的 `.now-grid` 块 |
-| 关于页技术栈/项目 | `src/pages/about.astro` 顶部的 `featured` 和 `stack` 数组 |
-| 首页打字机短句 | `src/pages/index.astro` 的 `typeLines` 数组 |
-| 鼠标拖尾颜色/速度/形状 | `src/components/CursorTrail.astro`（colors 数组 + MAX/LIFE/throttle 常量） |
-| TOC 阅读进度环色 | `src/components/TableOfContents.astro` 里搜 `#ff5d8f`（粉色） |
-| Header 自动隐藏阈值 | `src/components/Header.astro` 里 `TOP_LOCK`（贴顶锁定区）+ `THRESH`（抖动阈值） |
+| :--- | :--- |
+| 站点标题 / 描述 | [src/consts.ts](src/consts.ts) |
+| giscus 仓库 / 分类 ID | [src/consts.ts](src/consts.ts) 的 `GISCUS` 常量（4 个 ID 从 https://giscus.app 配置器拿） |
+| giscus 主题配色 | [public/giscus-theme.css](public/giscus-theme.css)（透明度 / 按钮渐变 / tab 配色） |
+| 顶部导航 / 社交链接 | [src/components/Header.astro](src/components/Header.astro) + [src/components/Footer.astro](src/components/Footer.astro) |
+| 玻璃透明度 / 边框 / 阴影 | [src/styles/global.css](src/styles/global.css) 的 `:root` `--glass-*` |
+| 滚动条颜色 | [src/styles/global.css](src/styles/global.css) 搜 `#66CCFF` |
+| 头像 wiggle 强度 | [src/styles/global.css](src/styles/global.css) 的 `@keyframes avatar-wiggle` |
+| 全屏背景图 | 替换 [src/assets/bg.jpg](src/assets/bg.jpg) |
+| favicon | 替换 [src/assets/elysia.png](src/assets/elysia.png) → 跑 `node scripts/gen-favicon.mjs` |
+| 音乐歌单 | [src/components/MusicPlayer.astro](src/components/MusicPlayer.astro) 的 `playlistId`（网易云歌单 ID） |
+| 友链 | [src/data/friends.json](src/data/friends.json) → 改完跑 `npx bloom refresh-og` |
+| 回忆相册 | [src/data/memories.json](src/data/memories.json) + 图片丢 `public/memories/` |
+| 画板色板 / 工具 | [src/pages/whiteboard.astro](src/pages/whiteboard.astro) 顶部 `.swatches` HTML 块 |
+| 首页 Now 区 | [src/pages/index.astro](src/pages/index.astro) 的 `.now-grid` 块 |
+| 首页打字机短句 | [src/pages/index.astro](src/pages/index.astro) 的 `typeLines` 数组 |
+| 关于页技术栈 / 项目 | [src/pages/about.astro](src/pages/about.astro) 顶部 `featured` / `stack` |
+| Mermaid 主题色 | [src/layouts/BlogPost.astro](src/layouts/BlogPost.astro) 末尾 `mermaid.initialize` |
+| 代码块 macOS 窗口配色 | [src/styles/global.css](src/styles/global.css) 的 `pre.astro-code` 段 |
+| lightbox 工具栏 / 缩放范围 | [src/layouts/BlogPost.astro](src/layouts/BlogPost.astro) 末尾 figure-lightbox 脚本 |
+| 鼠标拖尾参数 | [src/components/CursorTrail.astro](src/components/CursorTrail.astro)（colors / MAX / LIFE / throttle） |
+| Header 自动隐藏阈值 | [src/components/Header.astro](src/components/Header.astro) 的 `TOP_LOCK` / `THRESH` |
 
-## 项目惯例（重要！别再踩这些坑）
+---
 
-详见 [CLAUDE.md](./CLAUDE.md) 和[博文中的「项目工作规范」一节](https://wizardhehejun.github.io/blog/building-this-blog/)。摘几条：
+## ⚠️ 别再踩这些坑
 
-1. **背景图必须用独立 `BgLayer` 组件**——别直接挂 body，否则 `backdrop-filter` 会冻结
-2. **二次元图必须先 `Read` 工具验证**——LLM 基于 tag 推断常常出错
-3. **竖版人像图必须用 `crop-hero.mjs` 预裁**——Astro `<Image>` 的 attention 算法对二次元不准
-4. **Pagefind 动态 import 必须用 `<script is:inline>`**——否则 Vite 在构建时报错
-5. **改完必须 `npm run build` 验证再 push**——别提交未构建过的代码
-6. **响应式只用四档断点**：640 / 960 / 1280 / 1400（再加 1800 给大屏）——不要发明 720 / 1024 之类
-7. **宽度用 `width: min(Npx, 100% - 2em)`** 替代 `width + max-width` 双写
-8. **全局 `box-sizing: border-box`** 必须有，否则 mobile 按钮 width:100% + padding 会溢出
-9. **`align-items: center` + 内部高列表 = 坑**：列表会被居中导致 translateY 数学错乱——必须用内层 `.window` 包裹 + `position: absolute` 列表（见 ticker 实现）
-10. **博客列表卡片用单列横向 + 奇偶交错**——置顶博文必须用独立大图样式差异化，不能只靠徽章
-11. **TOC 等组件的 inline script 必须包 DOMContentLoaded**——`<script is:inline>` 在 HTML 解析到位置时立即执行，那时 `.prose` 等后续元素还没渲染
-12. **滚动跟随必须用 `transform: translateY()` 而不是 `top`**——前者走 GPU 合成层，后者每帧触发 layout 重排，加上 `backdrop-filter` 直接掉帧
-13. **跨组件协调用 body class**——`body.has-toc`、`body.header-hidden`、`body.drawer-open` 等，让 CSS 选择器单点联动多个组件，避免 prop drilling
-14. **CSS 特异性陷阱**：相同特异性按源序后写赢——想覆盖必须显式提高一档（如 `nav h2 a:hover` 胜过 `nav a:hover`）
-15. **数学最优解：6 = LCM(2, 3)**——首页最近文章展示 6 篇，2 列 / 3 列 grid 都能整齐填满，无孤儿尾巴
-16. **Grid 防溢出 pattern：`minmax(min(Npx, 100%), 1fr)`**——别直接 `minmax(280px, 1fr)`，窄屏父容器 < 280px 时卡片会撑出右边界
-17. **SVG 必须 inline `width`/`height` 属性**——Astro scoped CSS 加 `!important` 都不一定可靠，HTML 属性最稳
-18. **giscus 自定义主题 URL 必须带 cache buster `?v=`**——iframe 会缓存 theme CSS，改了不刷新；构建时间戳追加到 URL 解决
-19. **移动端必须 `-webkit-tap-highlight-color: transparent`**——iOS/Android 默认点击蓝方块会破坏自定义 active 反馈
-20. **Astro page-scoped CSS 不下钻子组件渲染的元素**（CLAUDE.md §38）——`.card-media img` 在 page 里写，HeroImage 组件渲染的 img 带不同 cid，匹配失败；改用 `:global()` 或者把样式搬进子组件
-21. **`.mdx` 不继承顶层 `markdown.remarkPlugins`**（§39）——必须 `mdx({ remarkPlugins })` 和 `markdown.remarkPlugins` 都注册同一份共享数组
-22. **新装 npm 包必看 install hook**（§40）——`grep -E 'preinstall\|postinstall' node_modules/<pkg>/package.json`；obfuscated 代码 + crypto + fetch + 强制非主流 runtime = 否决（实战否决了 @antv/infographic）
-23. **`backdrop-filter` 在祖先上让后代 `position: fixed` 退化成 absolute**——fullscreen pre / lightbox 必须 portal 到 body 直接子级才能逃出 stacking trap
-24. **CSS `max-height` 跟 JS 设的 `height` 会打架**——viewport 小于某值时 CSS max 赢，JS height 失效（TOC 卡撑不到 viewport 底的根因）；JS 完全接管尺寸时删 CSS fallback
-25. **Shiki 默认 `github-dark` 主题在玻璃白底上反差大**——`astro.config.mjs` 的 `markdown.shikiConfig: { theme: 'github-light' }` 统一全站
+反复栽过的几个，留给未来的自己：
+
+1. **改完必须 `npm run build` 验证再 push** —— CI 失败的代价远高于本地多跑 30 秒
+2. **视觉改动 push 后强刷** —— `Ctrl+Shift+R`，默认刷新对图片 / 字体不奏效
+3. **响应式只用四档断点**：`640 / 960 / 1280 / 1400`（+ 1800 大屏，720 给汉堡触发） —— 不要发明 720 / 1024 之类
+4. **`friends.json` 改完一定跑 `npx bloom refresh-og`** —— OG 数据要 commit 进 git，CI 不上网
+5. **装新 npm 包前看 install hook** —— `grep -E 'preinstall|postinstall' node_modules/<pkg>/package.json`；obfuscated 代码 + crypto + fetch + 强制非主流 runtime = 直接否决
+6. **二次元图必须实际看一眼再用** —— LLM 基于 tag 推断常常出错（侧脸 / 背影 / 水印混进来）
+
+---
+
+## 📚 灵感来源
+
+- **[Hexo Shoka](https://shoka.lostyu.me/)** —— `:::callout` / `:::spoiler` / `:::fold` 等 directive 风格
+- **[astro-koharu](https://github.com/cosZone/astro-koharu)** —— README 结构参考
+- **米哈游 / 崩坏 3** —— 二次元水彩玻璃风视觉语言
+
+---
 
 ## License
 
-代码 MIT。文章内容请勿转载。
+代码 **MIT**。文章内容请勿转载。

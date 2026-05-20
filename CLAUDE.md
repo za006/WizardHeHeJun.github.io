@@ -74,7 +74,7 @@ gh run list --workflow "Deploy to GitHub Pages" --limit 1      # 查最新部署
 ## 目录结构
 
 ```text
-my-blog/
+stardust/
 ├── public/                    # 静态资源（直接拷到根路径）
 │   ├── favicon-*.png          # 多尺寸 favicon
 │   ├── giscus-theme.css       # 评论自定义主题（生产用）
