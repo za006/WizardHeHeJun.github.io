@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "cli": "node scripts/blog-cli.mjs",
+    "cms": "node scripts/run-cms.mjs",
     "new": "node scripts/new-post.mjs",
     "refresh-og": "node scripts/refresh-og.mjs",
     "prebuild": "node scripts/gen-lqip.mjs",
