@@ -1,5 +1,5 @@
 ---
-name: blog-post
+name: blog-writer
 description: 帮助在 Astro 6 + GitHub Pages 个人博客项目创建新博文。三种入口（CMS 浏览器 / CLI 菜单 / npm run new），引导填 frontmatter（5 类枚举分类 + 标签 + 置顶 + 草稿），按文章类型给结构模板，主动建议视觉元素（mermaid / 表格 / Shoka directives）和内容插入（行内图 / figure / link card / 引用块），辅助找 hero 图（用户已有图 / Safebooru 二选一），重要修改前提示 backup，最后跑 build + 提示 git push。使用场景：写一篇博文、写博客、新博文、记录一下、想发个 post、new post、create blog post。
 ---
 
