@@ -107,7 +107,7 @@ async function main() {
 	});
 
 	server.listen(PORT, '127.0.0.1', () => {
-		console.log(`\n  ❀ my-blog CMS`);
+		console.log(`\n  ❀ 星屑 Stardust`);
 		console.log(`  Local:   http://localhost:${PORT}/`);
 		console.log(`  Project: ${PROJECT_ROOT}\n`);
 	});

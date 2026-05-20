@@ -1,5 +1,5 @@
 // marked v15 自定义块：让预览支持 :::info / :::tip / :::warning / :::danger / :::spoiler / :::fold[title]
-// 对应 my-blog 的 plugins/remark-shoka-directives.mjs（remark 端），这里是浏览器内的快速等效实现
+// 对应 stardust 的 plugins/remark-shoka-directives.mjs（remark 端），这里是浏览器内的快速等效实现
 // 注意：完整渲染（含 mermaid / figure / shiki 高亮）请走 astro build；预览只覆盖 95% 视觉
 
 const FOLD_RE = /^:::fold(?:\[([^\]]*)\])?\s*\n([\s\S]*?)\n:::/;

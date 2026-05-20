@@ -1,6 +1,10 @@
-// my-blog 交互式 CLI：新建博文 / 备份 / 还原 / 备份管理
-// 设计：菜单驱动，"新建博文" 委托给现有的 scripts/new-post.mjs（保留其 stdin 处理）
-//      备份/还原/清理 用本地 lib/backup.mjs 实现（基于 node-tar）
+#!/usr/bin/env node
+// bloom —— 星屑 Stardust 自家 CLI：新建博文 / CMS / OG 刷新 / 备份 / 还原 / 列表 / 清理
+// 设计：菜单 + 子命令双入口
+//   - 无参（`bloom`）          → 进交互菜单（@clack/prompts）
+//   - 有子命令（`bloom new`）  → 直接执行对应 handler，不进菜单
+//   - new / cms / refresh-og 委托给已有独立脚本（spawn 透传 stdio），不动它们内部逻辑
+//   - backup / restore / list / clean 直接调 lib/backup.mjs
 import * as p from '@clack/prompts';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -23,14 +27,27 @@ function bail(msg) {
 }
 
 async function handleNew() {
-	p.log.info('交给 scripts/new-post.mjs（保留其交互式 prompt）');
 	const result = spawnSync(process.execPath, ['scripts/new-post.mjs'], {
 		stdio: 'inherit',
 		cwd: PROJECT_ROOT,
 	});
-	if (result.status !== 0) {
-		p.log.warn(`new-post.mjs 退出码 ${result.status}`);
-	}
+	return result.status ?? 0;
+}
+
+async function handleCms() {
+	const result = spawnSync(process.execPath, ['scripts/run-cms.mjs'], {
+		stdio: 'inherit',
+		cwd: PROJECT_ROOT,
+	});
+	return result.status ?? 0;
+}
+
+async function handleRefreshOg(extraArgs = []) {
+	const result = spawnSync(process.execPath, ['scripts/refresh-og.mjs', ...extraArgs], {
+		stdio: 'inherit',
+		cwd: PROJECT_ROOT,
+	});
+	return result.status ?? 0;
 }
 
 async function handleBackup() {
@@ -161,14 +178,41 @@ async function handleClean() {
 	p.log.success(`✓ 删除 ${r.deleted.length} 个旧备份，保留 ${r.kept.length} 个`);
 }
 
-async function main() {
-	p.intro('❀ my-blog tools');
+function printHelp() {
+	console.log(`
+bloom —— 星屑 Stardust 自家工具
+
+用法:
+  bloom                    进交互菜单
+  bloom <command> [args]   直接执行子命令
+
+子命令:
+  new                      新建博文（交互式输入标题/分类/标签/置顶）
+  cms                      启动本地浏览器 CMS（端口 4322）
+  refresh-og [--force]     抓 friends.json + 博文裸 URL 的 OG meta
+  backup                   备份内容 / 配置（交互选择标准 / 完整）
+  restore                  从备份还原（默认先备份当前状态）
+  list                     列出已有备份
+  clean                    清理旧备份（按 keep N 保留最近的）
+  help, --help, -h         显示此帮助
+
+示例:
+  bloom new                # 直接新建一篇博文
+  bloom refresh-og --force # 全量重抓 OG meta
+  bloom                    # 不确定要做什么？进菜单慢慢挑
+`);
+}
+
+async function runMenu() {
+	p.intro('❀ 星屑 Stardust');
 
 	while (true) {
 		const action = await p.select({
 			message: '选择操作',
 			options: [
 				{ value: 'new', label: '✍  新建博文', hint: 'scaffold .md to src/content/blog/' },
+				{ value: 'cms', label: '📝 本地 CMS', hint: '浏览器写作，端口 4322' },
+				{ value: 'refresh-og', label: '🔗 刷新 OG 缓存', hint: '抓 friends.json + 博文裸 URL' },
 				{ value: 'backup', label: '📦 备份', hint: '打包 content + config' },
 				{ value: 'restore', label: '📂 还原', hint: '从备份还原' },
 				{ value: 'list', label: '📋 备份列表' },
@@ -184,6 +228,8 @@ async function main() {
 
 		try {
 			if (action === 'new') await handleNew();
+			else if (action === 'cms') await handleCms();
+			else if (action === 'refresh-og') await handleRefreshOg();
 			else if (action === 'backup') await handleBackup();
 			else if (action === 'restore') await handleRestore();
 			else if (action === 'list') await handleList();
@@ -193,6 +239,49 @@ async function main() {
 		}
 		// 一次操作后停顿一下，避免菜单刷得太快
 		p.log.message('');
+	}
+}
+
+async function main() {
+	const args = process.argv.slice(2);
+	const cmd = args[0];
+	const rest = args.slice(1);
+
+	if (!cmd) {
+		await runMenu();
+		return;
+	}
+
+	if (cmd === '--help' || cmd === '-h' || cmd === 'help') {
+		printHelp();
+		return;
+	}
+
+	const handlers = {
+		new: () => handleNew(),
+		cms: () => handleCms(),
+		'refresh-og': () => handleRefreshOg(rest),
+		backup: () => handleBackup(),
+		restore: () => handleRestore(),
+		list: () => handleList(),
+		clean: () => handleClean(),
+	};
+
+	const handler = handlers[cmd];
+	if (!handler) {
+		console.error(`未知子命令: ${cmd}`);
+		console.error('用 bloom --help 查看可用命令');
+		process.exit(1);
+	}
+
+	try {
+		const code = await handler();
+		if (typeof code === 'number' && code !== 0) {
+			process.exit(code);
+		}
+	} catch (e) {
+		console.error(`错误: ${e.message}`);
+		process.exit(1);
 	}
 }
 

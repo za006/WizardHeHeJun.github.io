@@ -1,9 +1,9 @@
 {
-  "name": "my-blog-cms",
+  "name": "stardust-cms",
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "Local-only CMS for my-blog — write posts in browser, save to filesystem",
+  "description": "Local-only CMS for 星屑 Stardust — write posts in browser, save to filesystem",
   "scripts": {
     "dev": "node server.mjs"
   },

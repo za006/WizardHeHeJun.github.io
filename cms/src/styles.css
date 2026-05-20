@@ -1,4 +1,4 @@
-/* my-blog CMS — 玻璃风样式，跟主站对齐 */
+/* 星屑 Stardust — 玻璃风样式，跟主站对齐 */
 :root {
 	--accent: #ff5d8f;
 	--accent-soft: rgba(255, 93, 143, 0.12);
@@ -471,7 +471,7 @@ body {
 	border-radius: 6px;
 }
 
-/* shoka directives 预览（与 my-blog plugins/remark-shoka-directives.mjs 视觉对齐） */
+/* shoka directives 预览（与 stardust plugins/remark-shoka-directives.mjs 视觉对齐） */
 .markdown-preview .callout {
 	margin: 0.8em 0;
 	padding: 0.7em 1em;

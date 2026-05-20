@@ -1,5 +1,5 @@
 {
-  "name": "my-blog",
+  "name": "stardust",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -7,14 +7,13 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "cli": "node scripts/blog-cli.mjs",
-    "cms": "node scripts/run-cms.mjs",
-    "new": "node scripts/new-post.mjs",
-    "refresh-og": "node scripts/refresh-og.mjs",
     "prebuild": "node scripts/gen-lqip.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
+  },
+  "bin": {
+    "bloom": "./scripts/blog-cli.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.5",

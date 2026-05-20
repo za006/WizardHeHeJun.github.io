@@ -74,7 +74,7 @@ export async function runBackup({ full = false } = {}) {
 	const manifestPath = resolve(PROJECT_ROOT, manifestName);
 
 	const manifest = {
-		name: 'my-blog-backup',
+		name: 'stardust-backup',
 		version: 1,
 		type: full ? 'full' : 'standard',
 		createdAt: new Date().toISOString(),
