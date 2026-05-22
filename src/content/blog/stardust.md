@@ -1,11 +1,16 @@
 ---
-title: '把博客抽成模板：stardust 的诞生'
-description: '从个人博客抽出一个开源模板的过程——替换清单、stardust CLI 收口、给二次开发者留的扩展点。'
-pubDate: 'May 22 2026'
-heroImage: '../../assets/blog/stardust.png'
-category: '项目分享'
-tags: ['Astro', '博客模板', 'GitHub Pages', 'CLI', '开源']
-featured: true
+title: 把博客抽成模板：stardust 的诞生
+description: 从个人博客抽出一个开源模板的过程——替换清单、stardust CLI 收口、给二次开发者留的扩展点。
+pubDate: May 22 2026
+heroImage: ../../assets/blog/stardust.png
+category: 项目分享
+tags:
+  - Astro
+  - 博客模板
+  - GitHub Pages
+  - CLI
+  - 开源
+featured: false
 ---
 
 ## 起因
