@@ -1,10 +1,13 @@
 ---
-title: '智能电网能效优化：用 LSTM 做电力时序预测'
-description: '基于 LSTM 网络的电力数据时间序列预测项目——分析过往用电模式，预测未来电力需求。'
-pubDate: 'Apr 14 2026'
-heroImage: '../../assets/blog/grid-energy-lstm.jpg'
-category: '学习总结'
-tags: ['LSTM', '时序预测', '深度学习']
+title: 智能电网能效优化：用 LSTM 做电力时序预测
+description: 基于 LSTM 网络的电力数据时间序列预测项目——分析过往用电模式，预测未来电力需求。
+pubDate: Apr 14 2026
+heroImage: ../../assets/blog/grid-energy-lstm.jpg
+category: 项目分享
+tags:
+  - LSTM
+  - 时序预测
+  - 深度学习
 ---
 
 ## 是什么

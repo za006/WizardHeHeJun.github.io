@@ -1,11 +1,16 @@
 ---
-title: 'KNG：让 Claude Code 越用越准的知识驱动框架'
-description: '一个 Claude Code 插件，通过双知识库（能力库 + 项目库）+ 自动学习闭环，让 AI 在特定领域持续积累经验。'
-pubDate: 'May 12 2026'
-updatedDate: 'May 22 2026'
-heroImage: '../../assets/blog/kng.jpg'
-category: '项目分享'
-tags: ['Claude Code', 'Agent', '知识库', 'SQLite', 'FTS5']
+title: KNG：让 Claude Code 越用越准的知识驱动框架
+description: 一个 Claude Code 插件，通过双知识库（能力库 + 项目库）+ 自动学习闭环，让 AI 在特定领域持续积累经验。
+pubDate: May 12 2026
+updatedDate: May 22 2026
+heroImage: ../../assets/blog/kng.jpg
+category: 项目分享
+tags:
+  - Claude Code
+  - Agent
+  - 知识库
+  - SQLite
+  - FTS5
 ---
 
 ## 是什么
@@ -29,6 +34,95 @@ KNG（**K**nowledge-driven **N**ext-**G**en Agent Framework）是我做的一个
 
 数据存在 SQLite 里，用 FTS5 全文检索 + trigram 分词器（中文友好，无需 jieba）。
 
+### 整体架构图
+
+四层结构：**接入**（用户 + npm CLI） → **Claude Code 会话**（主对话 + Agent 子上下文） → **触发层**（自动 hooks + 显式 slash commands） → **执行层**（纯 stdlib Python 脚本） → **存储层**（`KNG_HOME` 下的双 KB + SQLite + cache + 配置）。
+
+```mermaid
+flowchart TB
+    User([用户])
+    CLI["npx kng-plugin<br/>install · link · skill"]
+
+    subgraph CC["Claude Code 会话"]
+        Main["主对话上下文"]
+        SubA["Agent 子上下文<br/>recall · evolve · extractor"]
+    end
+
+    subgraph Auto["Hooks · 自动触发"]
+        SS["SessionStart<br/>auto_viewer_hook<br/>━━━━<br/>viewer 版本对齐<br/>清失效条目 + 过期 cache<br/>待审反馈 nag"]
+        UR["UserPromptSubmit<br/>auto_retrieve_hook<br/>━━━━<br/>跑检索 → 注入命中提示"]
+        UE["UserPromptSubmit<br/>auto_evolve_hook<br/>━━━━<br/>滚 transcript<br/>N 轮后下发抽取指令"]
+    end
+
+    subgraph SK["Slash Commands · 显式调用"]
+        SMan["/kng-init · /kng-kb<br/>/kng-code · /kng-select"]
+        SRec["/kng-recall"]
+        SEvo["/kng-evolve"]
+    end
+
+    subgraph Py["Python Scripts · 纯 stdlib"]
+        Retr["retrieve_kb.py<br/>FTS5 trigram +<br/>skill / module / relation 三层加权"]
+        Imp["kb_import.py<br/>扫文件 → upsert"]
+        Dal["db.py · DAL"]
+        View["db_viewer.py · :8787"]
+        Reg["generate_registry.py"]
+    end
+
+    subgraph Store["KNG_HOME"]
+        Cap[("能力库<br/>kb/capability/*.md<br/>skill-registry.yaml")]
+        Proj[("项目库<br/>kb/projects/id/*.md<br/>project-modules.yaml")]
+        DB[("SQLite + FTS5<br/>kng.db")]
+        Cache["cache/<br/>pending-feedback.jsonl<br/>transcript-sid.jsonl"]
+        Conf["kng.config.json<br/>+ ./kng.project marker"]
+    end
+
+    User --> Main
+    CLI -.安装·链接.-> Conf
+    CLI -.装能力技能.-> Cap
+
+    Main -. 每条 prompt .-> UR
+    Main -. 每条 prompt .-> UE
+    Main -- "/kng-*" --> SK
+    SRec -.分发.-> SubA
+    SEvo -.分发.-> SubA
+    UE -. 达阈值发指令 .-> SubA
+    SubA --> Retr
+    SubA --> Imp
+
+    SS --> View
+    SS --> Dal
+    UR --> Retr
+    UE --> Cache
+
+    SMan --> Imp
+    SMan --> Reg
+
+    Retr --> DB
+    Imp --> DB
+    Imp --> Cap
+    Imp --> Proj
+    Reg --> Cap
+    View --> DB
+    Dal --> DB
+    UR -. 1 行命中提示 .-> Main
+
+    classDef store fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef hook fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    classDef skill fill:#dcfce7,stroke:#16a34a,color:#166534
+    classDef py fill:#f3e8ff,stroke:#9333ea,color:#6b21a8
+    class Cap,Proj,DB,Cache,Conf store
+    class SS,UR,UE hook
+    class SMan,SRec,SEvo skill
+    class Retr,Imp,Dal,View,Reg py
+```
+
+几个值得在图里专门看的细节：
+
+- **两条 UserPromptSubmit hook 并行存在**——一条把"提醒"塞回主上下文（召回回路），一条悄悄攒 transcript 等满了下发抽取指令（演化回路），互不干扰
+- **subagent 是隔离上下文**——`/kng-recall` 和 `/kng-evolve` 的实际工作都在子上下文跑，主对话只接结论，避免被检索原文/反馈队列污染
+- **Python 脚本是"无状态执行器"**——所有"懂语义"的事（模块发现、关系抽取、反馈归类）都甩给 Claude 自己读 SKILL.md 完成，脚本只做关键词匹配 + FTS5 + 规则加权
+- **文件和 DB 是双向同步的**——`kb_import.py` 把 `*.md` 灌进 SQLite 供检索用，但 Markdown 仍是事实源（可走 git diff 审计）
+
 ## 两个让我特别得意的设计
 
 **1. Hint + on-demand 的检索机制**
@@ -38,9 +132,72 @@ KNG（**K**nowledge-driven **N**ext-**G**en Agent Framework）是我做的一个
 - **结构性绕开 API 输入分类器**：业务术语（fuzz、安全测试等）密集时，直接注入会被 Anthropic 的安全分类器拦截整段对话。把"提醒信号"和"业务内容"分到两个通道，分类器永远看不到敏感词聚集
 - **不污染主对话上下文**：详情加载在 subagent 隔离上下文里跑，主助手只看摘要
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 用户
+    participant M as 主对话
+    participant H as auto_retrieve_hook
+    participant R as retrieve_kb.py
+    participant DB as SQLite + FTS5
+    participant S as /kng-recall subagent
+
+    U->>M: 提交 prompt
+    M->>H: UserPromptSubmit 触发
+    H->>R: 拼 query 起检索
+    R->>DB: FTS5 trigram 召回
+    DB-->>R: 候选 + rank
+    R->>R: skill / module / relation 三层加权
+    R-->>H: top-k 命中
+    H-->>M: 仅注入「[KNG] 命中 N 条」一行
+    Note over M: 主上下文未见 KB 原文,<br/>分类器无敏感词聚集
+    M->>S: 判定相关 → 显式调用
+    S->>R: 隔离上下文重跑同一检索
+    R-->>S: 详情片段
+    S-->>M: ≤800 字摘要回填
+```
+
 **2. 自动学习闭环**
 
 对话进行 5 轮后，hook 启动 extractor subagent，从最近的 user prompt 里抽 4 类候选反馈（correction / missed / constraint / confirmation），写入 pending 队列。攒到 8 条会主动邀请用户跑 `/kng-evolve` 做归并审核——**只有用户确认才落进 KB，AI 永远不能自动改写知识库**。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 用户
+    participant M as 主对话
+    participant E as auto_evolve_hook
+    participant C as cache · transcript + turn-state
+    participant X as extractor subagent
+    participant P as pending-feedback.jsonl
+    participant SS as SessionStart hook
+    participant V as /kng-evolve subagent
+    participant KB as KB 文件 + DB
+
+    loop 每条 prompt
+        U->>M: 提交 prompt
+        M->>E: UserPromptSubmit
+        E->>C: append transcript<br/>turn_count++
+    end
+    Note over E: turn_count ≥ 5
+    E-->>M: 注入抽取指令 (additionalContext)
+    M->>X: 分发到子上下文
+    X->>C: 读 transcript
+    X->>P: 写 4 类候选反馈<br/>correction / missed /<br/>constraint / confirmation
+
+    Note over SS,P: 下次会话启动
+    SS->>P: 数 pending 行数
+    Note over SS: ≥ 8 条
+    SS-->>M: nag: 建议跑 /kng-evolve
+    U->>M: 用户确认 → 调用 /kng-evolve
+    M->>V: 分发 Steps 3-8 到子上下文
+    V->>P: 读队列 + 按 tag 路由
+    V->>KB: 改 capability *.md /<br/>{module}-*.md / project-modules.yaml
+    V->>KB: kb_import.py --force 重建索引
+    V->>P: 标 applied · 保留未处理行
+```
+
+两个图放在一起看的妙处：召回回路是**单次同步流**（hook → hint → 主对话决策 → subagent → 摘要回填），演化回路是**N 轮累积 + 跨会话异步流**（每轮攒 → 满 5 轮抽取 → 攒 8 条 → 下次会话 nag → 用户确认 → 子上下文写库）。两条回路共用一对 `UserPromptSubmit` hook，但状态分别落在 `transcript-sid.jsonl` 和 `pending-feedback.jsonl` 里，互不踩。
 
 ## 安装
 
@@ -163,14 +320,14 @@ SessionStart hook 在每次会话启动时顺手处理这两件事：
 
 ```mermaid
 erDiagram
-    projects ||--o{ modules : has
-    projects ||--o{ kb_entries : contains
-    projects ||--o{ test_designs : produces
-    projects ||--o{ learning_feedback : collects
-    modules ||--o{ module_relations : from
-    modules ||--o{ module_relations : to
-    kb_entries ||--|| kb_entries_fts : indexes
-    skills ||--o{ kb_entries : covers
+    projects ||--o{ modules : "has"
+    projects ||--o{ kb_entries : "contains"
+    projects ||--o{ test_designs : "produces"
+    projects ||--o{ learning_feedback : "collects"
+    modules ||--o{ module_relations : "from_module"
+    modules ||--o{ module_relations : "to_module"
+    kb_entries ||--|| kb_entries_fts : "indexes"
+    skills ||--o{ kb_entries : "covers"
 ```
 
 几个常用查询：
@@ -200,8 +357,3 @@ Schema 设计上刻意没用 ORM——SQLite 体量小、查询直接写 SQL 更
 
 [github.com/WizardHeHeJun/kng](https://github.com/WizardHeHeJun/kng) · MIT License
 
----
-
-> 📝 **更新记录**
-> - 2026-05-12 初版：双知识库 + Hint 机制 + 自动学习闭环
-> - 2026-05-22 二版：补命令面板（6 条 slash + 9 条 CLI）/ SQLite + FTS5 trigram 中文检索 / Web 可视化 + 自动版本升级 / 自动清理 hook / DB Schema 一览

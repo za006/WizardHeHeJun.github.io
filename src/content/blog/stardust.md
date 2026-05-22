@@ -1,6 +1,8 @@
 ---
-title: 把博客抽成模板：stardust 的诞生
-description: 从个人博客抽出一个开源模板的过程——替换清单、stardust CLI 收口、给二次开发者留的扩展点。
+title: 博客模板：星屑 Stardust
+description: >-
+  从这个博客抽出来的开源 Astro 6 模板，玻璃风骨架 + stardust CLI，clone 下来填几个占位符就能 push 到 GitHub
+  Pages。
 pubDate: May 22 2026
 heroImage: ../../assets/blog/stardust.png
 category: 项目分享
@@ -8,47 +10,36 @@ tags:
   - Astro
   - 博客模板
   - GitHub Pages
-  - CLI
   - 开源
 featured: false
 ---
 
-## 起因
+## 这是什么
 
-博客越改越发现一件事：每次给「玻璃风 + TOC + 抽屉 + 评论」这些通用骨架加功能，总会顺手污染到「头像 / 友链 / 博文」这些只属于我的内容。一边迭代框架一边维护私人页，每次都得小心翼翼绕开自己的东西。
+Stardust 是一个开源 Astro 6 博客模板——玻璃风 + parallax 背景 + TOC + 评论这些通用骨架都已经做好，clone 下来填几个占位符（头像 / 站点信息 / giscus ID），就能 push 到 GitHub Pages 跑起来。
 
-干脆一分为二——私人内容留在原仓库（[WizardHeHeJun.github.io](https://github.com/WizardHeHeJun/WizardHeHeJun.github.io)）继续写，通用骨架抽到 [stardust](https://github.com/WizardHeHeJun/stardus) 作为模板独立维护。顺便也想试一下当 maintainer 的感觉：从「自用」到「别人能 clone 直接跑」，中间到底差了多少东西。
+仓库地址：[github.com/WizardHeHeJun/stardus](https://github.com/WizardHeHeJun/stardus)
 
-事实证明，「能跑」和「能让别人用」之间，差了一整个 README 的距离。
+![Stardust 模板的默认首页：水蓝玻璃 hero 卡居中，打字机短句配身份 pills，下方接最新博文列表与友链推荐——也就是这个博客现在的样子](../../assets/blog/stardust/01-home.png)
 
-## 抽离的边界
+## 都有什么
 
-把博客拆开看，大致是这样的分法：
-
-| 保留（模板的通用骨架） | 换成占位符（给二开者改的） |
+| 类别 | 内容 |
 |---|---|
-| 玻璃风 + parallax 背景层 | 头像 `src/assets/avatar.png` |
-| TOC / 抽屉 / 评论组件框架 | 站点标题、描述（`consts.ts`） |
-| stardust CLI + Markdown 扩展 | 社交链接（4 处全局搜 `href="#"`） |
-| 响应式 4 档断点 + 微动效 | giscus 4 个 ID |
-| LQIP + OG cache 工作链 | 网易云歌单 ID |
-| 5 个枚举分类 + 标签系统 | 友链 / memories / 博文（全清空） |
+| **视觉与交互** | 玻璃风 + parallax 背景层、LQIP（低质量占位）懒加载、图片自动 lightbox、4 档断点响应式（640 / 960 / 1280 / 1400）、自定义滚动条与微动效 |
+| **写作扩展** | 6 种 Markdown directive（info / tip / warning / danger / spoiler / fold）、Mermaid 客户端懒加载、macOS 风格代码块（复制 + 全屏）、自动 figure 包装 |
+| **站点能力** | Pagefind 静态全文搜索、giscus 评论（基于 GitHub Discussions）、5 个枚举分类 + 标签系统、博文 OG 缓存与刷新 |
+| **现成页面** | Home / About / 404（戏剧版）/ Friends（带 OG 卡）/ Memories（回忆相册）/ Whiteboard（画板）/ Blog 列表与详情 |
+| **写作工作流** | stardust CLI 7 个子命令、本地浏览器 CMS、备份还原 / favicon 自动生成 / OG 抓取 |
+| **部署** | GitHub Pages + GitHub Actions，单次部署约 40-50 秒，Node ≥22 |
 
-边界设计的难点不在「该不该保留 TOC」这类显然的事，而在**纯色和强个人配色之间那条灰色地带**——鼠标拖尾的几何抽象、选中态的高饱和粉、滚动条的色调，这些"装饰性"细节看起来无害，但凑在一起就是浓浓的"原作者印记"。反复改了几轮才意识到：模板化不只是删名字、换头像，整个视觉系统里只要带"强偏好色"都要中性化。
+技术栈零后端——Astro 6 静态生成 + jsDelivr 字体 + sharp 处理图片，除了 giscus 借了 GitHub Discussions 之外没用任何后端服务，挂哪儿都行，如想部署到服务器，可自行做此需求。
 
-附带的小决定：原本作为内置示例的两篇示范博文最后也删了——示例内容应该归 README 维护，而不是混在博文里跟用户自己的真实文章一起排序。
+![博文列表页：左右错落排版的玻璃卡，每张卡上方一行分类粉色 pill，下方一排标签胶囊，hero 缩略图带 LQIP 渐显，整体节奏像翻杂志](../../assets/blog/stardust/02-blog-list.png)
 
-## 模板初始化清单的设计
+## 用起来要做什么
 
-一开始想过做 `npx stardust init` 之类的引导脚手架——挨个问头像路径、giscus ID、站点描述，然后帮二开者改好所有文件。优雅，但**优雅是有代价的**：
-
-- 自动改文件 = 把决策藏进脚本里，二开者不知道改了哪些 / 没改哪些
-- 一旦脚手架本身出 bug，调试要先搞懂"它原本打算怎么改"
-- 加新可配置项需要同步改脚手架，长期维护成本更高
-
-最后选了 checkbox 清单——**笨，但诚实**。二开者把清单跑一遍，自己改自己看，没有黑盒。
-
-清单本体（写进 README 顶部，跟 hero 截图同屏可见）：
+clone 之后把下面这些占位符替换成自己的：
 
 - [ ] `src/consts.ts` — 站点标题、描述、giscus 4 个 ID
 - [ ] `astro.config.mjs` — `site` URL 改成自己的域名
@@ -59,37 +50,16 @@ featured: false
 - [ ] 全局搜 `href="#"` 占位，把社交链接替换掉
 - [ ] `src/components/MusicPlayer.astro` — 改网易云歌单 ID 或删 `<MusicPlayer />`
 - [ ] `.github/workflows/*.yml` — 确认 deploy 目标
-- [ ] 删示例博文（如还残留在 `src/content/blog/`）
 
-最容易踩的几个二阶坑：
+几个容易踩的坑：
 
-1. **favicon 可能要 build 2-3 次**才能齐——`scripts/gen-favicon.mjs` 前几次会跳过 CSS 输出，验证 `ls dist/_astro/*.css | wc -l` 该是 7
-2. **改完 `site` URL 后 OG 缓存要重抓**：`npx stardust refresh-og --force` 一下，否则友链卡的元数据还是旧域名
-3. **giscus 4 个 ID 必须从 [giscus.app](https://giscus.app) 配置器拿**——repo ID 和 category ID 不是字符串而是数字编码，肉眼复制容易看错位
+1. **favicon 可能要 build 2-3 次**才能齐——`scripts/gen-favicon.mjs` 前几次会跳过 CSS 输出
+2. **改完 `site` URL 后跑一下** `npx stardust refresh-og --force`，否则友链卡的元数据还是旧域名
+3. **giscus 4 个 ID 必须从 [giscus.app](https://giscus.app) 配置器拿**——repo ID 和 category ID 是数字编码，肉眼复制容易错位
 
-这些坑都是反复装错才补到清单里的。
+![refresh-og 抓出来的友链 OG 卡：每张卡左侧是站点缩略图，右侧标题 + 描述 + 域名 footer，整齐排列在友链页里，hover 时浮起一层玻璃](../../assets/blog/stardust/03-og-card.png)
 
-## stardust CLI 的由来
-
-模板抽出来之后，老命令一长串 `npm run xxx` 散在 `package.json` 里——`new-post`、`cms`、`gen-favicon`、`refresh-og`、`backup`、`restore`……人在工作的时候根本记不全。
-
-```bash
-# 旧
-npm run new-post
-npm run cms
-npm run refresh-og
-
-# 新
-npx stardust new
-npx stardust cms
-npx stardust refresh-og
-```
-
-收成子命令风之后有几个直接收益：
-
-- **`npx stardust` 一行出交互菜单**：新手不用查命令，跑一下看选项就行
-- **子命令名跟动作对齐**：`stardust new` 比 `npm run new-post` 短而准
-- **bin 链接自动建立**在 `./node_modules/.bin/stardust`，配合 `npx` 不用全局装
+## Stardust CLI
 
 7 个子命令对应 7 种日常操作：
 
@@ -103,11 +73,13 @@ npx stardust refresh-og
 | `stardust list` | 列出已有备份 |
 | `stardust clean` | 清理旧备份 |
 
-命名上 CLI 跟项目同名是有意为之——CLI 就是项目本体的对外接口，叫别的名字反而要二开者多记一个。
+直接跑 `npx stardust` 不带子命令会出交互菜单，新手不用查命令。
 
-## 给二次开发者留的扩展点
+![stardust cms 启动后的本地 CMS：浏览器里跑在 4322 端口，左侧博文列表，右侧 frontmatter 表单（标题 / 分类 / 标签 / 草稿开关），底部直出 Markdown 编辑区——纯本地，不上传任何东西](../../assets/blog/stardust/04-cms.png)
 
-模板设计时刻意把几个"高频会改"的位置都集中收口，省得二开者翻整个项目猜：
+## 给二开者的扩展点
+
+几个"高频会改"的位置都集中收口在一个文件里，省得翻整个项目猜：
 
 | 想做的事 | 改哪儿 |
 |---|---|
@@ -117,31 +89,9 @@ npx stardust refresh-og
 | 加新 Markdown directive | `plugins/remark-shoka-directives.mjs` 里加一种 transformer |
 | 换字体 | `src/styles/global.css` 顶部的 jsDelivr `@font-face` URL |
 
-每处都尽量做到"改一个文件就生效"——而不是"改一个文件、再加一段 import、再调整三处 CSS、再跑某个脚本"。如果你发现哪个扩展点改起来还是要东挪西凑，欢迎开 issue 告诉我，我会想办法把它收口到一个文件。
+![Markdown 里直接写 mermaid 代码块，前端懒加载渲染：一张流程图嵌在正文中，节点用玻璃风配色，跟博客整体视觉一致](../../assets/blog/stardust/05-mermaid.png)
 
-## 跟本博客的关系
 
-物理上是两个仓库：
-
-- **[stardust](https://github.com/WizardHeHeJun/stardus)** —— 骨架 / 模板，对外发布
-- **[WizardHeHeJun.github.io](https://github.com/WizardHeHeJun/WizardHeHeJun.github.io)** —— 我自己的博客，本质上是 stardust 的一个二开实例
-
-我的维护立场很简单——**stardust 维护的是骨架本身的健康度**：能 clone、能跑、初始化清单准确、二阶坑及时补到 README。至于二开者拿到之后想做什么样的个人化、加什么页、改什么动效，那是他们自己的事——我不会通过 stardust 去框定"博客应该长什么样"。
-
-唯一会回流到 stardust 的是**骨架层的缺陷**：
-
-- CSS var 命名冲突、组件 props 设计不合理
-- 初始化清单漏了某项
-- 某个 directive transformer 有 edge case bug
-- 工作流脚本（stardust CLI）在新环境跑不通
-
-这些是所有二开者都会受影响的共性问题，自然该在 stardust 修。
-
-我自己博客上"加了张回忆相册照片"、"友链加了一个新站点"、"调了下首页打字机文案"——这些是**实例级改动**，不进 stardust，也不该进。
-
-## 现状
-
-能跑、能看、能让我自己继续在它上面写——我现在用的就是它。这篇博客本身就是 stardust 的活 demo，导航 / TOC / 评论 / 画板 / 回忆相册都直接可点。
 
 要是 clone 之后跑出问题，欢迎开 issue。
 
