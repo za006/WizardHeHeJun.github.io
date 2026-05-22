@@ -6,7 +6,7 @@ import { EditorState } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { keymap } from '@codemirror/view';
 
-export function CodeEditor({ value, onChange, onSave }) {
+export function CodeEditor({ value, onChange, onSave, apiRef }) {
 	const containerRef = useRef(null);
 	const viewRef = useRef(null);
 	const onSaveRef = useRef(onSave);
@@ -43,9 +43,24 @@ export function CodeEditor({ value, onChange, onSave }) {
 			parent: containerRef.current,
 		});
 		viewRef.current = view;
+		if (apiRef) {
+			apiRef.current = {
+				scrollToLine(line) {
+					const doc = view.state.doc;
+					if (!line || line < 1 || line > doc.lines) return;
+					const pos = doc.line(line).from;
+					view.dispatch({
+						selection: { anchor: pos },
+						effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 }),
+					});
+					view.focus();
+				},
+			};
+		}
 		return () => {
 			view.destroy();
 			viewRef.current = null;
+			if (apiRef) apiRef.current = null;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);

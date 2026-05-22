@@ -1,5 +1,5 @@
 // 主编辑器：frontmatter form（可折叠）+ CodeMirror + 实时预览 + 保存 + VS Code 跳转
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { FrontmatterForm } from './FrontmatterForm.jsx';
 import { CodeEditor } from './CodeEditor.jsx';
 import { MarkdownPreview } from './MarkdownPreview.jsx';
@@ -13,6 +13,8 @@ export function PostEditor({ id, config, onDirtyChange }) {
 	const [showForm, setShowForm] = useState(true);
 	const [lastSavedAt, setLastSavedAt] = useState(null);
 	const [error, setError] = useState(null);
+	const previewPaneRef = useRef(null);
+	const editorApiRef = useRef(null);
 
 	const isDirty =
 		original != null &&
@@ -73,6 +75,27 @@ export function PostEditor({ id, config, onDirtyChange }) {
 			setSaving(false);
 		}
 	}, [original, isDirty, saving, id, frontmatter, content]);
+
+	// 把编辑器跳到预览当前视口顶部所对应的章节标题（按 N 个标题的索引对齐）
+	const syncEditorToPreview = useCallback(() => {
+		const pane = previewPaneRef.current;
+		const api = editorApiRef.current;
+		if (!pane || !api) return;
+		const scroller = pane.querySelector('.markdown-preview');
+		if (!scroller) return;
+		const headings = scroller.querySelectorAll('h1, h2, h3, h4, h5, h6');
+		if (headings.length === 0) return;
+		const threshold = scroller.getBoundingClientRect().top + 4;
+		let index = headings.length - 1;
+		for (let i = 0; i < headings.length; i++) {
+			if (headings[i].getBoundingClientRect().bottom > threshold) {
+				index = i;
+				break;
+			}
+		}
+		const line = findNthHeadingLine(content, index);
+		if (line) api.scrollToLine(line);
+	}, [content]);
 
 	// 全局 Ctrl+S 监听（form 里也能 ctrl+s，不光是 CodeMirror 内）
 	useEffect(() => {
@@ -142,14 +165,52 @@ export function PostEditor({ id, config, onDirtyChange }) {
 
 			<div class="editor-split">
 				<div class="pane pane-editor">
-					<div class="pane-label">编辑（CodeMirror）</div>
-					<CodeEditor value={content} onChange={setContent} onSave={save} />
+					<div class="pane-label">
+						<span>编辑（CodeMirror）</span>
+						<button
+							type="button"
+							class="pane-action-btn"
+							onClick={syncEditorToPreview}
+							title="跳到右侧预览当前可见的章节标题"
+						>
+							🎯 跟随预览
+						</button>
+					</div>
+					<CodeEditor
+						value={content}
+						onChange={setContent}
+						onSave={save}
+						apiRef={editorApiRef}
+					/>
 				</div>
-				<div class="pane pane-preview">
-					<div class="pane-label">预览（marked + directives）</div>
+				<div class="pane pane-preview" ref={previewPaneRef}>
+					<div class="pane-label">
+						<span>预览（marked + directives）</span>
+					</div>
 					<MarkdownPreview source={content} />
 				</div>
 			</div>
 		</div>
 	);
+}
+
+// 找到 markdown 源里第 N 个 ATX 标题（# 开头）所在的行号（1-indexed）
+// 跳过 ``` / ~~~ 围栏代码块里的 # 字符（避免把代码注释当成标题）
+function findNthHeadingLine(markdown, index) {
+	const lines = (markdown || '').split('\n');
+	let count = 0;
+	let inFence = false;
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		if (/^(```|~~~)/.test(line)) {
+			inFence = !inFence;
+			continue;
+		}
+		if (inFence) continue;
+		if (/^#{1,6}\s/.test(line)) {
+			if (count === index) return i + 1;
+			count++;
+		}
+	}
+	return null;
 }
