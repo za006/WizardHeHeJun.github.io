@@ -9,13 +9,16 @@
     "dev": "astro dev",
     "prebuild": "node scripts/gen-lqip.mjs",
     "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "preview": "npm run build && wrangler dev",
+    "astro": "astro",
+    "generate-types": "wrangler types",
+    "deploy": "npm run build && wrangler deploy"
   },
   "bin": {
     "stardust": "./scripts/blog-cli.mjs"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^13.6.1",
     "@astrojs/mdx": "^5.0.5",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.2",
@@ -29,6 +32,10 @@
     "@clack/prompts": "^1.4.0",
     "astro-pagefind": "^2.0.0",
     "pagefind": "^1.5.2",
-    "tar": "^7.5.15"
+    "tar": "^7.5.15",
+    "wrangler": "^4.97.0"
+  },
+  "overrides": {
+    "vite": "^7"
   }
 }

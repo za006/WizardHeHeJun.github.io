@@ -29,3 +29,9 @@ backups/
 # cms standalone subproject (phase 2)
 cms/node_modules/
 cms/.vite/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
