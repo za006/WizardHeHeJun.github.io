@@ -10,10 +10,9 @@ import remarkLinkCard from './plugins/remark-link-card.mjs';
 import remarkMermaid from './plugins/remark-mermaid.mjs';
 import remarkShokaDirectives from './plugins/remark-shoka-directives.mjs';
 
-
-
 import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
+import keystatic from "@keystatic/astro";
 
 // 注册公共的markdown和mdx插件
 const remarkPlugins = [
@@ -24,16 +23,22 @@ const remarkPlugins = [
     remarkFigure,
 ];
 
-// https://astro.build/config
+// https://astro.build
 export default defineConfig({
     output: 'static',
-    site: 'https://wizardhehejun.github.io',
-    integrations: [mdx({ remarkPlugins }), sitemap(), pagefind(), react(), markdoc()],
+    site: 'https://github.io',
+    integrations: [
+        mdx({ remarkPlugins }),
+        sitemap(),
+        pagefind(),
+        react(),
+        markdoc(),
+        ...(process.env.NODE_ENV === 'development' ? [keystatic()] : [])
+    ],
     markdown: {
         remarkPlugins,
-        // shiki 默认 github-dark；玻璃白底上反差太大，改成 light 主题
         shikiConfig: {
-            theme: 'github-light',
-        },
-    },
+            theme: 'github-light'
+        }
+    }
 });

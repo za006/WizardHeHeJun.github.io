@@ -7,6 +7,8 @@
   },
   "scripts": {
     "dev": "astro dev",
+
+
     "prebuild": "node scripts/gen-lqip.mjs",
     "build": "astro build",
     "preview": "astro preview",
