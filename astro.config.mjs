@@ -27,7 +27,7 @@ const remarkPlugins = [
 
 // https://astro.build/config
 export default defineConfig({
-    output:'static',
+    output: 'static',
     site: 'https://wizardhehejun.github.io',
     integrations: [mdx({ remarkPlugins }), sitemap(), pagefind(), react(), markdoc()],
     markdown: {
