@@ -15,8 +15,7 @@ import remarkShokaDirectives from './plugins/remark-shoka-directives.mjs';
 import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
 
-// 共享给 .md（markdown）和 .mdx（mdx integration）—— CLAUDE.md §39：
-// astro 顶层 markdown.remarkPlugins 不会被 mdx() 继承，必须两处都注册
+// 注册公共的markdown和mdx插件
 const remarkPlugins = [
     remarkDirective,
     remarkShokaDirectives,
