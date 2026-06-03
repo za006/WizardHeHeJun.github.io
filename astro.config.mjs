@@ -9,7 +9,6 @@ import remarkFigure from './plugins/remark-figure.mjs';
 import remarkLinkCard from './plugins/remark-link-card.mjs';
 import remarkMermaid from './plugins/remark-mermaid.mjs';
 import remarkShokaDirectives from './plugins/remark-shoka-directives.mjs';
-import keystatic from '@keystatic/astro';
 
 
 
@@ -28,8 +27,9 @@ const remarkPlugins = [
 
 // https://astro.build/config
 export default defineConfig({
+    output:'static'
     site: 'https://wizardhehejun.github.io',
-    integrations: [mdx({ remarkPlugins }), sitemap(), pagefind(), react(), markdoc(),keystatic()],
+    integrations: [mdx({ remarkPlugins }), sitemap(), pagefind(), react(), markdoc()],
     markdown: {
         remarkPlugins,
         // shiki 默认 github-dark；玻璃白底上反差太大，改成 light 主题
