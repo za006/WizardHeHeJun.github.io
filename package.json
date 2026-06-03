@@ -23,10 +23,13 @@
     "mermaid": "^11.15.0",
     "remark-directive": "^4.0.0",
     "sharp": "^0.34.3",
+    "tinacms": "^3.9.0",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@clack/prompts": "^1.4.0",
+    "@tinacms/cli": "^2.4.3",
+    "@types/node": "^25.9.1",
     "astro-pagefind": "^2.0.0",
     "pagefind": "^1.5.2",
     "tar": "^7.5.15"

@@ -29,3 +29,7 @@ backups/
 # cms standalone subproject (phase 2)
 cms/node_modules/
 cms/.vite/
+
+node_modules
+.env
+tina/__generated__
