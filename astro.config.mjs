@@ -17,7 +17,11 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 import fs from 'fs';
 import path from 'path';
 
-if (process.env.NODE_ENV === 'development') {
+
+
+const isLocal = process.env.NODE_ENV === 'development' || !process.env.CF_PAGES;
+
+if (isLocal) {
     process.env.KEYSTATIC_URL = 'http://192.168.7.105:4321';
 }
 
@@ -40,13 +44,13 @@ export default defineConfig({
          port: 4321,
     },
     vite: {
-        server: {
+        server: isLocal ? {
             https: {
                 // 强迫底层 Vite 编译器直接去读取你在 Documents 里测好的真 PFX 证书和密码
                 pfx: fs.readFileSync('D:\\55555githhhhh\\okzhengshu\\my-android-cert.pfx'),
                 passphrase: '123456'
             }
-        }
+        } : {}
     },
 
 
