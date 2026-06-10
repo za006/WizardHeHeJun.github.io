@@ -13,6 +13,14 @@ import remarkShokaDirectives from './plugins/remark-shoka-directives.mjs';
 import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
 import keystatic from "@keystatic/astro";
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import fs from 'fs';
+import path from 'path';
+
+if (process.env.NODE_ENV === 'development') {
+    process.env.KEYSTATIC_URL = 'http://192.168.7.105:4321';
+}
+
 
 // 注册公共的markdown和mdx插件
 const remarkPlugins = [
@@ -26,6 +34,23 @@ const remarkPlugins = [
 // https://astro.build
 export default defineConfig({
     output: 'static',
+
+    server: {
+         host: '0.0.0.0',
+         port: 4321,
+    },
+    vite: {
+        server: {
+            https: {
+                // 强迫底层 Vite 编译器直接去读取你在 Documents 里测好的真 PFX 证书和密码
+                pfx: fs.readFileSync('D:\\55555githhhhh\\okzhengshu\\my-android-cert.pfx'),
+                passphrase: '123456'
+            }
+        }
+    },
+
+
+
     site: 'https://github.io',
     integrations: [
         mdx({ remarkPlugins }),
