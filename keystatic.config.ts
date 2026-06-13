@@ -58,7 +58,9 @@ export default config({
         }),
         tags: fields.array(fields.text({ label: '标签' }), {
           label: '标签列表',
-          itemLabel: props => props.value
+          itemLabel: props => props.value,
+  // 🌟 大环境兼容补丁：强制 Keystatic 在写 Markdown 时压缩成单行安全的 JSON 数组格式，坚决不给它生成错位空行的机会
+          slugField: undefined,
         }),
 
         // --- 状态与置顶控制 ---

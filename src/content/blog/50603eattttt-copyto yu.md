@@ -1,18 +1,16 @@
 ---
-
-title: 50603eattttt
-description: 这是一篇新文章的简介...
-pubDate: '2024-04-18'
+title: 50613雨 养老能量
+description: 雨能量 这是一篇新文章的简介...
+pubDate: '2026-06-13'
 heroImage: ../../assets/blog/building-this-blog.jpg
 category: 项目分享
-tags: []
+tags:
+  - 老故事
 draft: false
 featured: false
 order: 0
 author: Admin
-
 ---
-
 eattttt
 
 人家 会读书的年轻 小哥哥 就在口腔医院当院长 日子好的很
